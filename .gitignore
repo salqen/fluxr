@@ -1,0 +1,28 @@
+# Secrets / env
+.env
+.env.local
+
+# Runtime data
+/tmp/
+fluxr_data/
+instabot_data/
+_tmp_test/
+*.log
+seen_posts.txt
+bot_config.json
+bot_stats.json
+users.json
+scheduled_posts.json
+media_uploads/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
