@@ -42,8 +42,13 @@ BASE_URL        = os.environ.get("BASE_URL", "http://localhost:5000")  # Railway
 PORT            = int(os.environ.get("PORT", 5000))
 
 app = Flask(__name__)
+from werkzeug.middleware.proxy_fix import ProxyFix
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 CORS(app)
 app.secret_key = SECRET_KEY
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 # ── SÚBORY & PRIEČINKY ────────────────────────────────────────────────────────
 # Na Railway /tmp pretrváva počas behu, resetuje sa pri redeploy
