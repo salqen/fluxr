@@ -3,32 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>InstaBot v3.0</title>
+<title>fluxr</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ── TOKENS ─────────────────────────────────────────────────────────── */
 :root {
-  --bg:      #0C0C14;
-  --s1:      #13131E;
-  --s2:      #1A1A28;
-  --s3:      #222235;
-  --border:  #252538;
-  --border2: #333352;
+  --bg:      #08080F;
+  --s1:      #14141F;
+  --s2:      #1C1C2B;
+  --s3:      #262638;
+  --border:  #272739;
+  --border2: #383859;
   --pk:      #FF3CAB;
   --pu:      #7B5CF0;
   --gr:      #00E5A0;
   --bl:      #4A9EFF;
   --or:      #FF8C42;
-  --text:    #F0F0FA;
-  --sub:     #9090B0;
-  --muted:   #52526B;
+  --text:    #F2F2FB;
+  --sub:     #9C9CC0;
+  --muted:   #5A5A78;
+  --grad:    linear-gradient(135deg, #FF3CAB 0%, #7B5CF0 100%);
+  --shadow:  0 6px 24px rgba(0,0,0,.35);
+  --shadow-sm: 0 2px 10px rgba(0,0,0,.25);
   --fd: 'Space Grotesk', sans-serif;
   --fb: 'Inter', sans-serif;
   --fm: 'DM Mono', monospace;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--text); font-family: var(--fb); font-size: 14px; min-height: 100vh; overflow-x: hidden; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--fb); font-size: 14px;
+  min-height: 100vh; overflow-x: hidden; position: relative;
+}
+/* Ambient brand glow */
+body::before {
+  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(560px circle at 12% -5%, rgba(255,60,171,.14), transparent 60%),
+    radial-gradient(620px circle at 90% 0%, rgba(123,92,240,.13), transparent 58%);
+}
+/* fluxr brand mark */
+.logo-mark {
+  width: 22px; height: 22px; border-radius: 7px; background: var(--grad);
+  display: inline-block; vertical-align: -5px; margin-right: 9px;
+  box-shadow: 0 3px 12px rgba(255,60,171,.45);
+  position: relative;
+}
+.logo-mark::after {
+  content: ''; position: absolute; inset: 6px 6px auto 6px; height: 3px;
+  border-radius: 2px; background: rgba(255,255,255,.92);
+  box-shadow: 0 5px 0 rgba(255,255,255,.55), 0 -1px 0 rgba(255,255,255,.4);
+}
 
 /* ── TOPBAR ──────────────────────────────────────────────────────────── */
 .topbar {
@@ -63,14 +88,14 @@ body { background: var(--bg); color: var(--text); font-family: var(--fb); font-s
   letter-spacing: -.1px;
 }
 .tab-btn:hover { color: var(--sub); }
-.tab-btn.active { color: var(--text); border-bottom-color: var(--pk); }
+.tab-btn.active { color: var(--text); border-bottom-color: transparent; background-image: var(--grad); background-size: 100% 2px; background-position: bottom; background-repeat: no-repeat; }
 
 /* ── CONTENT ─────────────────────────────────────────────────────────── */
 .pane { display: none; padding: 14px 14px 100px; max-width: 500px; margin: 0 auto; }
 .pane.active { display: block; }
 
 /* ── CARDS ───────────────────────────────────────────────────────────── */
-.card { background: var(--s1); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 12px; overflow: hidden; }
+.card { background: var(--s1); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 12px; overflow: hidden; box-shadow: var(--shadow-sm); }
 .card-head { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
 .card-title { font-family: var(--fd); font-weight: 600; font-size: 14px; }
 .card-body { padding: 14px 16px; }
@@ -129,7 +154,7 @@ select { cursor: pointer; }
 
 /* ── BUTTONS ─────────────────────────────────────────────────────────── */
 .btn { display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 10px; padding: 10px 16px; font-family: var(--fd); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all .2s; }
-.btn-primary { background: linear-gradient(135deg, var(--pk), #c030e0); color: #fff; box-shadow: 0 4px 20px rgba(255,60,171,.25); }
+.btn-primary { background: var(--grad); color: #fff; box-shadow: 0 4px 20px rgba(255,60,171,.25); }
 .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,60,171,.35); }
 .btn-primary:active { transform: none; }
 .btn-secondary { background: var(--s3); border: 1px solid var(--border2); color: var(--sub); }
@@ -155,7 +180,7 @@ select { cursor: pointer; }
 
 /* ── STATS GRID ──────────────────────────────────────────────────────── */
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-.stat-card { background: var(--s1); border: 1px solid var(--border); border-radius: 14px; padding: 14px 15px; }
+.stat-card { background: linear-gradient(160deg, var(--s2), var(--s1)); border: 1px solid var(--border); border-radius: 14px; padding: 14px 15px; box-shadow: var(--shadow-sm); }
 .stat-label { font-family: var(--fm); font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 4px; }
 .stat-val { font-family: var(--fd); font-size: 30px; font-weight: 700; line-height: 1; }
 .stat-val.pk { color: var(--pk); } .stat-val.gr { color: var(--gr); } .stat-val.bl { color: var(--bl); }
@@ -215,7 +240,7 @@ input:checked ~ .toggle-track .toggle-thumb { transform: translateX(20px); backg
 /* ── MAIN CTA BUTTON (BOT) ───────────────────────────────────────────── */
 .bot-cta-wrap { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; padding: 12px 14px 22px; background: linear-gradient(to top, var(--bg) 60%, transparent); }
 .bot-cta { width: 100%; max-width: 500px; margin: 0 auto; display: block; height: 56px; border-radius: 16px; border: none; font-family: var(--fd); font-size: 17px; font-weight: 700; cursor: pointer; transition: all .25s; letter-spacing: -.2px; }
-.bot-cta.start { background: linear-gradient(135deg, var(--pk), #c030e0); color: #fff; box-shadow: 0 8px 30px rgba(255,60,171,.3); }
+.bot-cta.start { background: var(--grad); color: #fff; box-shadow: 0 8px 30px rgba(255,60,171,.3); }
 .bot-cta.start:hover { box-shadow: 0 10px 36px rgba(255,60,171,.45); }
 .bot-cta.stop  { background: var(--s2); border: 1.5px solid var(--pk); color: var(--pk); }
 .bot-cta.dis   { background: var(--s2); color: var(--muted); cursor: not-allowed; }
@@ -253,7 +278,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="logo">Insta<em>Bot</em><span>v3.1</span></div>
+  <div class="logo"><span class="logo-mark"></span>flux<em>r</em></div>
   <div class="topright">
     <div class="srv"><div class="dot" id="dot"></div><span id="srv-label">Pripájam...</span></div>
     <div id="user-chip" style="display:none;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 4px;cursor:pointer" onclick="toggleUserMenu()">

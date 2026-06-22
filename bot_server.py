@@ -1,6 +1,6 @@
 """
-InstaBot v3.1 — Railway Edition
-================================
+fluxr — Railway Edition
+=======================
 Spustenie lokálne: python bot_server.py
 Railway: automaticky cez Procfile
 """
@@ -46,13 +46,21 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 CORS(app)
 app.secret_key = SECRET_KEY
-app.config['SESSION_COOKIE_SECURE'] = True
+
+# Secure cookies len ak beží cez HTTPS (produkcia). Lokálne (http://localhost)
+# by SECURE=True spôsobil, že prehliadač cookie zahodí → nekonečný login loop.
+IS_HTTPS = BASE_URL.startswith("https") or REDIRECT_URI.startswith("https")
+app.config['SESSION_COOKIE_SECURE'] = IS_HTTPS
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 
+if not os.environ.get("SECRET_KEY"):
+    print("⚠️  SECRET_KEY nie je nastavený v ENV — sessions sa zrušia pri reštarte. "
+          "Nastav stabilný SECRET_KEY v Railway premenných.")
+
 # ── SÚBORY & PRIEČINKY ────────────────────────────────────────────────────────
 # Na Railway /tmp pretrváva počas behu, resetuje sa pri redeploy
-DATA_DIR      = os.environ.get("DATA_DIR", "/tmp/instabot_data")
+DATA_DIR      = os.environ.get("DATA_DIR", "/tmp/fluxr_data")
 MEDIA_DIR     = os.path.join(DATA_DIR, "media_uploads")
 DB_FILE       = os.path.join(DATA_DIR, "seen_posts.txt")
 CONFIG_FILE   = os.path.join(DATA_DIR, "bot_config.json")
@@ -560,6 +568,58 @@ def api_clear_seen():
     return jsonify({"ok": True})
 
 # ── API — PUBLISHER ───────────────────────────────────────────────────────────
+@app.route("/api/pub/config", methods=["GET"])
+def pub_get_config():
+    user = get_current_user()
+    if not user:
+        return jsonify({"has_token": False, "ig_user_id": "", "server_public_url": BASE_URL})
+    return jsonify({
+        "has_token":         bool(user.get("token")),
+        "ig_user_id":        user.get("ig_user_id", ""),
+        "server_public_url": user.get("server_public_url", BASE_URL)
+    })
+
+@app.route("/api/pub/config", methods=["POST"])
+def pub_set_config():
+    user = get_current_user()
+    if not user:
+        return jsonify({"ok": False, "error": "Nie si prihlásený"})
+    data  = request.get_json(silent=True) or {}
+    users = load_users()
+    uid   = user["ig_user_id"]
+    rec   = users.get(uid, {})
+
+    if data.get("access_token"):
+        rec["token"] = data["access_token"]
+    if data.get("ig_user_id"):
+        rec["ig_user_id"] = data["ig_user_id"]
+    if "server_public_url" in data:
+        rec["server_public_url"] = data["server_public_url"]
+
+    users[uid] = rec
+    save_users(users)
+
+    # Reštartuj plánovač s novým tokenom
+    if PUBLISHER_AVAILABLE and rec.get("token") and rec.get("ig_user_id"):
+        old = schedulers.pop(uid, None)
+        if old:
+            old.stop()
+        pub = IGPublisher(rec["token"], rec["ig_user_id"])
+        sch = PostScheduler(pub, SCHEDULE_FILE, MEDIA_DIR, add_log)
+        sch.start()
+        schedulers[rec["ig_user_id"]] = sch
+    return jsonify({"ok": True})
+
+@app.route("/api/pub/verify", methods=["GET"])
+def pub_verify():
+    user = get_current_user()
+    if not user or not user.get("token"):
+        return jsonify({"ok": False, "error": "Nie si prihlásený alebo chýba token"})
+    if not PUBLISHER_AVAILABLE:
+        return jsonify({"ok": False, "error": "ig_publisher.py chýba"})
+    pub = IGPublisher(user["token"], user["ig_user_id"])
+    return jsonify(pub.verify_token())
+
 @app.route("/api/pub/upload", methods=["POST"])
 def pub_upload():
     if "file" not in request.files:
@@ -707,7 +767,7 @@ if __name__ == "__main__":
                 schedulers[uid] = sch
 
     print("\n" + "="*60)
-    print("  InstaBot v3.1 — Railway Edition")
+    print("  fluxr — Railway Edition")
     print(f"  Publisher:  {'✅' if PUBLISHER_AVAILABLE else '⚠️ ig_publisher.py chýba'}")
     print(f"  Selenium:   {'✅ dostupný' if SELENIUM_AVAILABLE else '❌ nedostupný (Railway mode)'}")
     print(f"  Port:       {PORT}")
