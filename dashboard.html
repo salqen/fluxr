@@ -2,1105 +2,958 @@
 <html lang="sk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>fluxr</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-/* ── TOKENS ─────────────────────────────────────────────────────────── */
-:root {
-  --bg:      #08080F;
-  --s1:      #14141F;
-  --s2:      #1C1C2B;
-  --s3:      #262638;
-  --border:  #272739;
-  --border2: #383859;
-  --pk:      #FF3CAB;
-  --pu:      #7B5CF0;
-  --gr:      #00E5A0;
-  --bl:      #4A9EFF;
-  --or:      #FF8C42;
-  --text:    #F2F2FB;
-  --sub:     #9C9CC0;
-  --muted:   #5A5A78;
-  --grad:    linear-gradient(135deg, #FF3CAB 0%, #7B5CF0 100%);
-  --shadow:  0 6px 24px rgba(0,0,0,.35);
-  --shadow-sm: 0 2px 10px rgba(0,0,0,.25);
-  --fd: 'Space Grotesk', sans-serif;
-  --fb: 'Inter', sans-serif;
-  --fm: 'DM Mono', monospace;
+:root{
+  --bg:#08080F; --s1:#14141F; --s2:#1C1C2B; --s3:#262638;
+  --border:#272739; --border2:#383859;
+  --pk:#FF3CAB; --pu:#7B5CF0; --gr:#00E5A0; --bl:#4A9EFF; --or:#FF8C42; --rd:#FF5C6C;
+  --text:#F2F2FB; --sub:#9C9CC0; --muted:#5A5A78;
+  --grad:linear-gradient(135deg,#FF3CAB 0%,#7B5CF0 100%);
+  --shadow:0 8px 30px rgba(0,0,0,.40); --shadow-sm:0 2px 12px rgba(0,0,0,.28);
+  --fd:'Space Grotesk',sans-serif; --fb:'Inter',sans-serif; --fm:'DM Mono',monospace;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg); color: var(--text); font-family: var(--fb); font-size: 14px;
-  min-height: 100vh; overflow-x: hidden; position: relative;
+*{box-sizing:border-box;margin:0;padding:0}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
+body{background:var(--bg);color:var(--text);font-family:var(--fb);font-size:14px;min-height:100vh;overflow-x:hidden;position:relative}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(620px circle at 6% -4%,rgba(255,60,171,.13),transparent 58%),
+             radial-gradient(680px circle at 98% 0%,rgba(123,92,240,.13),transparent 56%)}
+a{color:inherit;text-decoration:none}
+input,select,textarea,button{font-family:inherit}
+
+/* ── LAYOUT ─────────────────────────────────────────── */
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:240px;flex-shrink:0;border-right:1px solid var(--border);
+  background:rgba(14,14,22,.7);backdrop-filter:blur(16px);
+  position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:20px 14px;z-index:50}
+.brand{display:flex;align-items:center;gap:11px;padding:4px 8px 22px;font-family:var(--fd);font-weight:700;font-size:21px;letter-spacing:-.4px}
+.brand em{color:var(--pk);font-style:normal}
+.logo-mark{width:30px;height:30px;border-radius:9px;background:var(--grad);box-shadow:0 4px 16px rgba(255,60,171,.45);position:relative;flex-shrink:0}
+.logo-mark::after{content:'';position:absolute;inset:9px 8px auto 8px;height:3.5px;border-radius:2px;background:rgba(255,255,255,.95);
+  box-shadow:0 6px 0 rgba(255,255,255,.6),0 -1px 0 rgba(255,255,255,.4)}
+.nav{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:11px;color:var(--sub);cursor:pointer;font-weight:500;font-size:14px;transition:all .18s;position:relative}
+.nav-item .ni-ic{font-size:17px;width:20px;text-align:center}
+.nav-item:hover{background:var(--s2);color:var(--text)}
+.nav-item.active{background:var(--s2);color:var(--text)}
+.nav-item.active::before{content:'';position:absolute;left:-14px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--grad)}
+.nav-badge{margin-left:auto;background:var(--s3);color:var(--sub);font-size:11px;font-family:var(--fm);padding:1px 7px;border-radius:20px}
+.sidebar-foot{margin-top:auto}
+.acct-mini{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:12px;background:var(--s1);cursor:pointer;transition:border-color .2s}
+.acct-mini:hover{border-color:var(--border2)}
+.acct-mini img{width:34px;height:34px;border-radius:50%;object-fit:cover;background:var(--s3);flex-shrink:0}
+.acct-mini .am-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct-mini .am-sub{font-size:11px;color:var(--muted);font-family:var(--fm)}
+
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:60px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(8,8,15,.8);backdrop-filter:blur(14px);z-index:40}
+.page-title{font-family:var(--fd);font-weight:600;font-size:18px}
+.topright{display:flex;align-items:center;gap:14px}
+.srv{display:flex;align-items:center;gap:6px;font-family:var(--fm);font-size:12px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:all .3s}
+.dot.on{background:var(--gr);box-shadow:0 0 9px var(--gr);animation:blink 2s infinite}
+.dot.err{background:var(--rd);box-shadow:0 0 9px var(--rd)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.content{flex:1;padding:26px 28px 60px;max-width:1080px;width:100%;margin:0 auto}
+.page{display:none;animation:fade .25s ease}
+.page.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* mobile bottom nav */
+.mobnav{display:none}
+
+/* ── CARDS / PRIMITIVES ─────────────────────────────── */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-sm);overflow:hidden}
+.card-pad{padding:20px}
+.card-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card-title{font-family:var(--fd);font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}
+.card-body{padding:18px 20px}
+.grid{display:grid;gap:16px}
+.section-label{font-family:var(--fm);font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.9px;margin:22px 0 11px}
+.section-label:first-child{margin-top:0}
+.muted{color:var(--muted)} .sub{color:var(--sub)}
+.hint{font-size:12.5px;color:var(--muted);line-height:1.55}
+
+/* fields */
+.field{margin-bottom:14px}
+.field-label{font-size:12.5px;font-weight:500;color:var(--sub);margin-bottom:7px;display:flex;justify-content:space-between;align-items:center}
+.field-label .char-count{font-family:var(--fm);color:var(--muted);font-size:11.5px}
+textarea,input[type=text],input[type=datetime-local],input[type=url],input[type=password],select{
+  width:100%;background:var(--s2);border:1px solid var(--border);border-radius:11px;color:var(--text);
+  font-family:var(--fb);font-size:14px;padding:11px 13px;outline:none;resize:none;transition:border-color .2s,box-shadow .2s}
+textarea:focus,input:focus,select:focus{border-color:var(--pk);box-shadow:0 0 0 3px rgba(255,60,171,.12)}
+textarea{min-height:104px;line-height:1.55}
+select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235A5A78' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:none;border-radius:11px;padding:11px 18px;font-family:var(--fd);font-size:14px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--grad);color:#fff;box-shadow:0 4px 20px rgba(255,60,171,.28)}
+.btn-primary:not(:disabled):hover{transform:translateY(-1px);box-shadow:0 7px 26px rgba(255,60,171,.4)}
+.btn-secondary{background:var(--s2);border:1px solid var(--border2);color:var(--sub)}
+.btn-secondary:hover{border-color:var(--pk);color:var(--text)}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--sub);padding:8px 14px;font-size:13px}
+.btn-ghost:hover{border-color:var(--pk);color:var(--pk)}
+.btn-danger{background:rgba(255,92,108,.1);border:1px solid rgba(255,92,108,.3);color:var(--rd)}
+.btn-danger:hover{background:rgba(255,92,108,.18)}
+.btn-row{display:flex;gap:10px}
+.btn-block{width:100%}
+
+/* chips */
+.chips-wrap{display:flex;flex-wrap:wrap;gap:7px}
+.chip{display:flex;align-items:center;gap:5px;padding:5px 11px;background:var(--s3);border:1px solid var(--border2);border-radius:100px;font-size:12.5px;font-family:var(--fm);color:var(--bl)}
+.chip.mt{color:var(--pu)}
+.chip .rm{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;line-height:1;padding:0}
+.chip .rm:hover{color:var(--rd)}
+.chip-row{display:flex;gap:8px;margin-top:9px}
+.chip-row input{border-radius:10px}
+.chip-add{background:var(--s3);border:1px solid var(--border2);color:var(--sub);border-radius:10px;padding:0 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s}
+.chip-add:hover{border-color:var(--pk);color:var(--pk)}
+.preset-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.preset{background:transparent;border:1px dashed var(--border2);color:var(--muted);font-size:11.5px;font-family:var(--fm);padding:4px 10px;border-radius:8px;cursor:pointer;transition:all .2s}
+.preset:hover{border-color:var(--pu);color:var(--pu)}
+
+/* badges */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-family:var(--fm);padding:3px 9px;border-radius:20px;border:1px solid var(--border2);color:var(--sub)}
+.badge.ok{color:var(--gr);border-color:rgba(0,229,160,.35);background:rgba(0,229,160,.08)}
+.badge.bad{color:var(--or);border-color:rgba(255,140,66,.35);background:rgba(255,140,66,.08)}
+
+/* ── OVERVIEW ───────────────────────────────────────── */
+.hero{display:flex;align-items:center;gap:18px;padding:22px;background:linear-gradient(135deg,rgba(255,60,171,.10),rgba(123,92,240,.10)),var(--s1);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-sm)}
+.hero img{width:74px;height:74px;border-radius:50%;object-fit:cover;background:var(--s3);border:2px solid var(--border2);flex-shrink:0}
+.hero .h-name{font-family:var(--fd);font-weight:700;font-size:22px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hero .h-meta{color:var(--muted);font-family:var(--fm);font-size:12.5px;margin-top:5px}
+.hero .h-foll{margin-top:8px;display:flex;gap:22px}
+.hero .h-foll b{font-family:var(--fd);font-size:18px}
+.hero .h-foll span{font-size:11px;color:var(--muted);display:block;text-transform:uppercase;letter-spacing:.6px;margin-top:2px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat{background:linear-gradient(160deg,var(--s2),var(--s1));border:1px solid var(--border);border-radius:15px;padding:16px 17px;box-shadow:var(--shadow-sm)}
+.stat .st-l{font-family:var(--fm);font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px}
+.stat .st-v{font-family:var(--fd);font-size:27px;font-weight:700;line-height:1}
+.stat .st-s{font-size:11px;color:var(--muted);margin-top:5px;font-family:var(--fm)}
+.pk{color:var(--pk)} .gr{color:var(--gr)} .bl{color:var(--bl)} .pu{color:var(--pu)} .or{color:var(--or)}
+.health{display:flex;flex-direction:column;gap:2px}
+.h-row{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--border)}
+.h-row:last-child{border-bottom:none}
+.h-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;background:var(--s2);flex-shrink:0}
+.h-tx{flex:1;min-width:0}
+.h-tx .h-t{font-weight:600;font-size:13.5px}
+.h-tx .h-d{font-size:12px;color:var(--muted);margin-top:1px;line-height:1.5}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.qa{display:flex;flex-direction:column;gap:7px;align-items:flex-start;padding:16px;background:var(--s2);border:1px solid var(--border);border-radius:14px;cursor:pointer;transition:all .2s}
+.qa:hover{border-color:var(--pk);transform:translateY(-2px)}
+.qa .qa-ic{font-size:22px}
+.qa .qa-t{font-family:var(--fd);font-weight:600;font-size:14px}
+.qa .qa-d{font-size:11.5px;color:var(--muted)}
+
+/* ── COMPOSE ────────────────────────────────────────── */
+.compose-grid{display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start}
+.seg{display:flex;gap:6px;background:var(--s2);padding:5px;border-radius:13px;border:1px solid var(--border)}
+.seg-btn{flex:1;padding:9px;text-align:center;font-family:var(--fd);font-size:13.5px;font-weight:600;border-radius:9px;color:var(--muted);cursor:pointer;transition:all .2s;border:none;background:transparent}
+.seg-btn.active{background:var(--s3);color:var(--text);box-shadow:var(--shadow-sm)}
+.seg-btn.active.sg-pk{color:var(--pk)}
+.dropzone{border:2px dashed var(--border2);border-radius:14px;padding:34px 20px;text-align:center;cursor:pointer;transition:all .25s;position:relative;background:var(--s2)}
+.dropzone:hover,.dropzone.drag-over{border-color:var(--pk);background:rgba(255,60,171,.05)}
+.dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dz-icon{font-size:34px;margin-bottom:9px;display:block}
+.dz-label{font-family:var(--fd);font-size:14.5px;font-weight:600;color:var(--sub);margin-bottom:4px}
+.dz-sub{font-size:12px;color:var(--muted)}
+.dz-preview{border-radius:14px;overflow:hidden;position:relative;background:var(--s2)}
+.dz-preview img,.dz-preview video{width:100%;border-radius:14px;object-fit:cover;max-height:300px;display:block}
+.dz-clear{position:absolute;top:9px;right:9px;background:rgba(0,0,0,.7);border:none;color:#fff;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:15px}
+.upbar{height:4px;background:var(--s3);border-radius:2px;margin-top:10px;overflow:hidden;display:none}
+.upbar-fill{height:100%;background:var(--grad);width:0;transition:width .3s}
+
+/* AI panel */
+.ai-panel{background:rgba(123,92,240,.07);border:1px solid rgba(123,92,240,.25);border-radius:14px;padding:16px;margin-top:14px;display:none}
+.ai-panel.open{display:block}
+.ai-row{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:11px}
+.ai-row select{flex:1;min-width:120px;font-size:13px;padding:9px 11px}
+.ai-item{background:var(--s2);border:1px solid var(--border);border-radius:11px;padding:13px;margin-top:9px;font-size:13.5px;line-height:1.6;cursor:pointer;transition:all .2s}
+.ai-item:hover{border-color:var(--pu)}
+.ai-tags{margin-top:7px;display:flex;flex-wrap:wrap;gap:5px}
+.ai-tag{font-family:var(--fm);font-size:11px;color:var(--pu);background:rgba(123,92,240,.1);padding:2px 7px;border-radius:5px}
+.ai-msg{text-align:center;padding:18px;color:var(--muted);font-size:13px}
+
+/* music pills */
+.music-sugg{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.music-pill{background:var(--s3);border:1px solid var(--border2);color:var(--or);font-size:11.5px;font-family:var(--fm);padding:4px 10px;border-radius:7px;cursor:pointer;transition:all .2s}
+.music-pill:hover{border-color:var(--or)}
+
+/* phone preview */
+.preview-sticky{position:sticky;top:84px}
+.phone{background:#000;border:9px solid #1a1a26;border-radius:34px;overflow:hidden;box-shadow:var(--shadow);max-width:300px;margin:0 auto}
+.ph-top{display:flex;align-items:center;gap:9px;padding:11px 12px}
+.ph-top img{width:30px;height:30px;border-radius:50%;object-fit:cover;background:#333}
+.ph-top .ph-u{font-weight:600;font-size:13px;color:#fff}
+.ph-top .ph-dot{margin-left:auto;color:#888}
+.ph-media{width:100%;aspect-ratio:4/5;background:#111 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' fill='none' stroke='%23444' stroke-width='1.5'%3E%3Crect x='4' y='4' width='32' height='32' rx='4'/%3E%3Ccircle cx='14' cy='14' r='3'/%3E%3Cpath d='M34 28l-8-8-14 14'/%3E%3C/svg%3E") center/40px no-repeat;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ph-media.story{aspect-ratio:9/16}
+.ph-media img,.ph-media video{width:100%;height:100%;object-fit:cover}
+.ph-actions{display:flex;gap:14px;padding:10px 12px 4px;color:#fff;font-size:18px}
+.ph-actions .spacer{flex:1}
+.ph-cap{padding:2px 12px 14px;font-size:12.5px;color:#eee;line-height:1.5;max-height:120px;overflow:auto}
+.ph-cap b{color:#fff}
+.ph-cap .ph-tags{color:#7db4ff}
+
+/* ── BOT ────────────────────────────────────────────── */
+.bot-banner{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-radius:15px;border:1px solid var(--border);background:var(--s1);margin-bottom:16px;transition:all .3s}
+.bot-banner.run{background:rgba(0,229,160,.06);border-color:rgba(0,229,160,.35)}
+.bot-banner.blk{background:rgba(255,92,108,.06);border-color:rgba(255,92,108,.35)}
+.bb-left{display:flex;align-items:center;gap:11px}
+.bb-dot{width:10px;height:10px;border-radius:50%;background:var(--muted)}
+.bot-banner.run .bb-dot{background:var(--gr);box-shadow:0 0 9px var(--gr);animation:blink 1.4s infinite}
+.bot-banner.blk .bb-dot{background:var(--rd)}
+.bb-label{font-family:var(--fd);font-weight:600;font-size:15px}
+.bb-meta{font-size:12.5px;color:var(--muted);font-family:var(--fm);margin-top:2px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.tr-name{font-size:14px;font-weight:500} .tr-desc{font-size:12px;color:var(--muted);margin-top:2px}
+.tg{position:relative;width:46px;height:26px;flex-shrink:0}
+.tg input{opacity:0;width:0;height:0}
+.tg-track{position:absolute;inset:0;background:var(--s3);border:1.5px solid var(--border2);border-radius:100px;cursor:pointer;transition:all .25s}
+.tg-thumb{position:absolute;top:3px;left:3px;width:17px;height:17px;background:var(--muted);border-radius:50%;transition:all .25s}
+.tg input:checked~.tg-track{background:rgba(0,229,160,.12);border-color:var(--gr)}
+.tg input:checked~.tg-track .tg-thumb{transform:translateX(20px);background:var(--gr);box-shadow:0 0 9px rgba(0,229,160,.5)}
+.slider{margin-bottom:15px}
+.slider-head{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px;color:var(--sub)}
+.slider-val{font-family:var(--fm);color:var(--pk)}
+input[type=range]{-webkit-appearance:none;width:100%;height:5px;border-radius:3px;background:var(--s3);outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;background:var(--pk);box-shadow:0 0 9px rgba(255,60,171,.45)}
+.log-wrap{background:#0b0b13;border:1px solid var(--border);border-radius:13px;max-height:300px;overflow-y:auto;font-family:var(--fm)}
+.log-entry{display:flex;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);font-size:12px}
+.log-entry:last-child{border-bottom:none}
+.log-time{color:var(--muted);flex-shrink:0}
+.log-msg.ok{color:var(--gr)} .log-msg.err{color:var(--rd)} .log-msg.warn{color:var(--or)} .log-msg.info{color:var(--sub)}
+.cta-bot{height:54px;border-radius:15px;border:none;font-family:var(--fd);font-size:16px;font-weight:700;cursor:pointer;transition:all .22s}
+.cta-bot.start{background:var(--grad);color:#fff;box-shadow:0 8px 30px rgba(255,60,171,.3)}
+.cta-bot.stop{background:var(--s2);border:1.5px solid var(--rd);color:var(--rd)}
+.cta-bot.dis{background:var(--s2);color:var(--muted);cursor:not-allowed}
+
+/* schedule list */
+.sched-item{background:var(--s1);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px}
+.sched-thumb{width:56px;height:56px;border-radius:10px;object-fit:cover;background:var(--s3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid var(--border)}
+.sched-info{flex:1;min-width:0}
+.sched-type{font-family:var(--fm);font-size:10px;text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
+.sched-type.post{color:var(--bl)} .sched-type.reel{color:var(--pk)} .sched-type.story{color:var(--pu)}
+.sched-caption{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:5px}
+.sched-time{font-family:var(--fm);font-size:11.5px;color:var(--muted)}
+.sched-status{font-family:var(--fm);font-size:10px;padding:3px 8px;border-radius:5px}
+.sched-status.pending{background:rgba(74,158,255,.12);color:var(--bl)}
+.sched-status.published{background:rgba(0,229,160,.12);color:var(--gr)}
+.sched-status.failed{background:rgba(255,92,108,.12);color:var(--rd)}
+.sched-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px}
+.sched-del:hover{color:var(--rd)}
+.empty{text-align:center;padding:54px 20px;color:var(--muted)}
+.empty .ei{font-size:40px;margin-bottom:12px}
+.empty .et{font-size:14px;color:var(--sub)}
+
+/* verify result */
+.verify-box{font-size:13.5px;margin-top:10px;min-height:20px}
+
+/* toast */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);z-index:600;background:var(--s2);border:1px solid var(--border2);border-radius:13px;padding:12px 22px;font-size:13.5px;font-weight:500;opacity:0;transition:all .3s;pointer-events:none;box-shadow:var(--shadow)}
+.toast.ok{border-color:rgba(0,229,160,.4);color:var(--gr)}
+.toast.err{border-color:rgba(255,92,108,.4);color:var(--rd)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── RESPONSIVE ─────────────────────────────────────── */
+@media(max-width:900px){
+  .sidebar{display:none}
+  .compose-grid{grid-template-columns:1fr}
+  .preview-sticky{position:static}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .quick{grid-template-columns:1fr}
+  .content{padding:20px 16px 90px}
+  .topbar{padding:0 16px}
+  .mobnav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:60;background:rgba(14,14,22,.92);backdrop-filter:blur(16px);border-top:1px solid var(--border);padding:8px 6px calc(8px + env(safe-area-inset-bottom))}
+  .mobnav .nav-item{flex:1;flex-direction:column;gap:3px;padding:6px;font-size:10.5px;border-radius:10px}
+  .mobnav .nav-item .ni-ic{font-size:19px}
+  .mobnav .nav-item.active::before{display:none}
+  .mobnav .nav-badge{display:none}
+  .mobnav .nav-label{font-weight:600}
 }
-/* Ambient brand glow */
-body::before {
-  content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-  background:
-    radial-gradient(560px circle at 12% -5%, rgba(255,60,171,.14), transparent 60%),
-    radial-gradient(620px circle at 90% 0%, rgba(123,92,240,.13), transparent 58%);
-}
-/* fluxr brand mark */
-.logo-mark {
-  width: 22px; height: 22px; border-radius: 7px; background: var(--grad);
-  display: inline-block; vertical-align: -5px; margin-right: 9px;
-  box-shadow: 0 3px 12px rgba(255,60,171,.45);
-  position: relative;
-}
-.logo-mark::after {
-  content: ''; position: absolute; inset: 6px 6px auto 6px; height: 3px;
-  border-radius: 2px; background: rgba(255,255,255,.92);
-  box-shadow: 0 5px 0 rgba(255,255,255,.55), 0 -1px 0 rgba(255,255,255,.4);
-}
-
-/* ── TOPBAR ──────────────────────────────────────────────────────────── */
-.topbar {
-  position: sticky; top: 0; z-index: 200;
-  background: rgba(12,12,20,.9); backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--border);
-  padding: 0 16px; height: 52px;
-  display: flex; align-items: center; justify-content: space-between;
-}
-.logo { font-family: var(--fd); font-weight: 700; font-size: 18px; letter-spacing: -.3px; }
-.logo em { color: var(--pk); font-style: normal; }
-.logo span { font-size: 11px; color: var(--muted); margin-left: 6px; font-family: var(--fm); }
-.topright { display: flex; align-items: center; gap: 10px; }
-.srv { display: flex; align-items: center; gap: 5px; font-family: var(--fm); font-size: 11px; color: var(--muted); }
-.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); transition: all .3s; }
-.dot.on  { background: var(--gr); box-shadow: 0 0 8px var(--gr); animation: blink 2s infinite; }
-.dot.err { background: var(--pk); }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
-
-.settings-btn { background: var(--s2); border: 1px solid var(--border); color: var(--sub); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; transition: all .2s; }
-.settings-btn:hover { border-color: var(--border2); color: var(--text); }
-
-/* ── MAIN TABS ───────────────────────────────────────────────────────── */
-.tabs-nav {
-  display: flex; gap: 2px; padding: 10px 12px 0;
-  border-bottom: 1px solid var(--border);
-  background: var(--s1);
-}
-.tab-btn {
-  flex: 1; padding: 9px 8px; text-align: center; font-family: var(--fd); font-size: 13px; font-weight: 600;
-  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s;
-  letter-spacing: -.1px;
-}
-.tab-btn:hover { color: var(--sub); }
-.tab-btn.active { color: var(--text); border-bottom-color: transparent; background-image: var(--grad); background-size: 100% 2px; background-position: bottom; background-repeat: no-repeat; }
-
-/* ── CONTENT ─────────────────────────────────────────────────────────── */
-.pane { display: none; padding: 14px 14px 100px; max-width: 500px; margin: 0 auto; }
-.pane.active { display: block; }
-
-/* ── CARDS ───────────────────────────────────────────────────────────── */
-.card { background: var(--s1); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 12px; overflow: hidden; box-shadow: var(--shadow-sm); }
-.card-head { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-.card-title { font-family: var(--fd); font-weight: 600; font-size: 14px; }
-.card-body { padding: 14px 16px; }
-.section-label { font-family: var(--fm); font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px; margin-top: 18px; }
-.section-label:first-child { margin-top: 0; }
-
-/* ── SUB-TABS ────────────────────────────────────────────────────────── */
-.sub-tabs { display: flex; gap: 6px; padding: 12px 14px; }
-.sub-tab { flex: 1; padding: 8px; text-align: center; font-family: var(--fd); font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); cursor: pointer; transition: all .2s; background: transparent; }
-.sub-tab:hover { border-color: var(--border2); color: var(--sub); }
-.sub-tab.active { background: var(--s2); border-color: var(--pk); color: var(--pk); }
-
-/* ── DRAG DROP ZONE ──────────────────────────────────────────────────── */
-.dropzone {
-  border: 2px dashed var(--border2); border-radius: 14px; padding: 32px 20px;
-  text-align: center; cursor: pointer; transition: all .25s; position: relative;
-  background: var(--s2); margin-bottom: 12px;
-}
-.dropzone:hover, .dropzone.drag-over { border-color: var(--pk); background: rgba(255,60,171,.05); }
-.dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
-.dropzone .dz-icon { font-size: 32px; margin-bottom: 8px; display: block; }
-.dropzone .dz-label { font-family: var(--fd); font-size: 14px; font-weight: 600; color: var(--sub); margin-bottom: 4px; }
-.dropzone .dz-sub { font-size: 12px; color: var(--muted); }
-.dz-preview { margin-bottom: 12px; border-radius: 14px; overflow: hidden; position: relative; max-height: 260px; }
-.dz-preview img, .dz-preview video { width: 100%; border-radius: 14px; object-fit: cover; max-height: 260px; display: block; }
-.dz-preview .dz-clear { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.7); border: none; color: #fff; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
-.dz-upload-progress { height: 3px; background: var(--s3); border-radius: 2px; margin-bottom: 10px; overflow: hidden; display: none; }
-.dz-upload-progress-bar { height: 100%; background: linear-gradient(90deg, var(--pk), var(--pu)); width: 0; transition: width .3s; }
-
-/* ── INPUTS ──────────────────────────────────────────────────────────── */
-.field-group { margin-bottom: 10px; }
-.field-label { font-size: 12px; font-weight: 500; color: var(--sub); margin-bottom: 6px; display: flex; justify-content: space-between; }
-.field-label .char-count { font-family: var(--fm); color: var(--muted); }
-textarea, input[type=text], input[type=datetime-local], input[type=url], select {
-  width: 100%; background: var(--s2); border: 1px solid var(--border); border-radius: 10px;
-  color: var(--text); font-family: var(--fb); font-size: 13.5px; padding: 10px 12px;
-  outline: none; resize: none; transition: border-color .2s;
-}
-textarea:focus, input:focus, select:focus { border-color: var(--pk); }
-textarea { min-height: 90px; line-height: 1.55; }
-select { cursor: pointer; }
-
-/* Tags / chips */
-.chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.chip {
-  display: flex; align-items: center; gap: 4px; padding: 4px 10px;
-  background: var(--s3); border: 1px solid var(--border2); border-radius: 100px;
-  font-size: 12px; font-family: var(--fm); color: var(--bl); cursor: default;
-}
-.chip .rm { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; line-height: 1; padding: 0 0 0 2px; }
-.chip .rm:hover { color: var(--pk); }
-.chip-input-row { display: flex; gap: 6px; margin-top: 8px; }
-.chip-input-row input { border-radius: 10px; }
-.chip-add-btn { background: var(--s3); border: 1px solid var(--border2); color: var(--sub); border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .2s; }
-.chip-add-btn:hover { border-color: var(--pk); color: var(--pk); }
-
-/* ── BUTTONS ─────────────────────────────────────────────────────────── */
-.btn { display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 10px; padding: 10px 16px; font-family: var(--fd); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all .2s; }
-.btn-primary { background: var(--grad); color: #fff; box-shadow: 0 4px 20px rgba(255,60,171,.25); }
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,60,171,.35); }
-.btn-primary:active { transform: none; }
-.btn-secondary { background: var(--s3); border: 1px solid var(--border2); color: var(--sub); }
-.btn-secondary:hover { border-color: var(--pk); color: var(--pk); }
-.btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--muted); font-size: 12.5px; padding: 7px 12px; border-radius: 8px; }
-.btn-ghost:hover { border-color: var(--border2); color: var(--sub); }
-.btn-row { display: flex; gap: 8px; margin-top: 14px; }
-.btn-row .btn { flex: 1; justify-content: center; }
-.btn-danger { background: rgba(255,60,60,.1); border: 1px solid rgba(255,80,80,.3); color: #ff6060; }
-.btn-danger:hover { background: rgba(255,60,60,.18); }
-
-/* AI Panel */
-.ai-panel { background: rgba(123,92,240,.07); border: 1px solid rgba(123,92,240,.25); border-radius: 14px; padding: 14px; margin-bottom: 12px; display: none; }
-.ai-panel.open { display: block; }
-.ai-result-item { background: var(--s2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; margin-top: 8px; font-size: 13px; line-height: 1.6; cursor: pointer; transition: all .2s; }
-.ai-result-item:hover { border-color: var(--pu); }
-.ai-result-item .ai-tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
-.ai-result-item .ai-tag { font-family: var(--fm); font-size: 11px; color: var(--pu); background: rgba(123,92,240,.1); padding: 2px 7px; border-radius: 4px; }
-.ai-loading { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
-.music-suggestions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
-.music-pill { background: var(--s3); border: 1px solid var(--border2); color: var(--or); font-size: 11.5px; font-family: var(--fm); padding: 4px 9px; border-radius: 6px; cursor: pointer; transition: all .2s; }
-.music-pill:hover { border-color: var(--or); }
-
-/* ── STATS GRID ──────────────────────────────────────────────────────── */
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
-.stat-card { background: linear-gradient(160deg, var(--s2), var(--s1)); border: 1px solid var(--border); border-radius: 14px; padding: 14px 15px; box-shadow: var(--shadow-sm); }
-.stat-label { font-family: var(--fm); font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 4px; }
-.stat-val { font-family: var(--fd); font-size: 30px; font-weight: 700; line-height: 1; }
-.stat-val.pk { color: var(--pk); } .stat-val.gr { color: var(--gr); } .stat-val.bl { color: var(--bl); }
-.stat-sub { font-size: 11px; color: var(--muted); margin-top: 3px; font-family: var(--fm); }
-.stat-wide { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
-
-/* ── TOGGLE ──────────────────────────────────────────────────────────── */
-.row-toggle { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--border); }
-.row-toggle:last-child { border-bottom: none; }
-.rt-info .rt-name { font-size: 14px; font-weight: 500; }
-.rt-info .rt-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.toggle-wrap { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
-.toggle-wrap input { opacity: 0; width: 0; height: 0; }
-.toggle-track { position: absolute; inset: 0; background: var(--s3); border: 1.5px solid var(--border2); border-radius: 100px; cursor: pointer; transition: all .25s; }
-.toggle-thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: var(--muted); border-radius: 50%; transition: all .25s; pointer-events: none; }
-input:checked ~ .toggle-track { background: rgba(0,229,160,.1); border-color: var(--gr); }
-input:checked ~ .toggle-track .toggle-thumb { transform: translateX(20px); background: var(--gr); box-shadow: 0 0 10px rgba(0,229,160,.5); }
-
-/* ── BOT BANNER ──────────────────────────────────────────────────────── */
-.bot-banner { border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border: 1px solid var(--border); background: var(--s1); transition: all .3s; }
-.bot-banner.run { background: rgba(0,229,160,.06); border-color: rgba(0,229,160,.35); }
-.bot-banner.blk { background: rgba(255,60,171,.06); border-color: rgba(255,60,171,.35); }
-.bb-left { display: flex; align-items: center; gap: 8px; }
-.bb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: all .3s; }
-.bot-banner.run .bb-dot { background: var(--gr); box-shadow: 0 0 8px var(--gr); animation: blink 1.5s infinite; }
-.bot-banner.blk .bb-dot { background: var(--pk); }
-.bb-label { font-family: var(--fd); font-size: 14px; font-weight: 600; }
-.bb-meta { font-size: 12px; color: var(--muted); font-family: var(--fm); }
-
-/* ── LOG ─────────────────────────────────────────────────────────────── */
-.log-wrap { background: var(--s1); border: 1px solid var(--border); border-radius: 14px; max-height: 240px; overflow-y: auto; }
-.log-entry { display: flex; gap: 8px; padding: 7px 13px; border-bottom: 1px solid var(--border); font-size: 11.5px; font-family: var(--fm); }
-.log-entry:last-child { border-bottom: none; }
-.log-time { color: var(--muted); flex-shrink: 0; }
-.log-msg.ok { color: var(--gr); } .log-msg.err { color: var(--pk); } .log-msg.warn { color: var(--or); } .log-msg.info { color: var(--sub); }
-.log-wrap::-webkit-scrollbar { width: 3px; }
-.log-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-/* ── SCHEDULE LIST ───────────────────────────────────────────────────── */
-.sched-item { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; }
-.sched-thumb { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; background: var(--s3); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid var(--border); }
-.sched-info { flex: 1; min-width: 0; }
-.sched-type { font-family: var(--fm); font-size: 10px; text-transform: uppercase; letter-spacing: .7px; margin-bottom: 3px; }
-.sched-type.post { color: var(--bl); } .sched-type.reel { color: var(--pk); } .sched-type.story { color: var(--pu); }
-.sched-caption { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; color: var(--text); }
-.sched-time { font-family: var(--fm); font-size: 11px; color: var(--muted); }
-.sched-status { font-family: var(--fm); font-size: 10px; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
-.sched-status.pending   { background: rgba(74,158,255,.12); color: var(--bl); }
-.sched-status.published { background: rgba(0,229,160,.12); color: var(--gr); }
-.sched-status.failed    { background: rgba(255,60,171,.12); color: var(--pk); }
-.sched-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0; transition: color .2s; }
-.sched-del:hover { color: var(--pk); }
-.empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
-.empty-state .ei { font-size: 36px; margin-bottom: 10px; }
-.empty-state .et { font-size: 14px; color: var(--sub); }
-
-/* ── MAIN CTA BUTTON (BOT) ───────────────────────────────────────────── */
-.bot-cta-wrap { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; padding: 12px 14px 22px; background: linear-gradient(to top, var(--bg) 60%, transparent); }
-.bot-cta { width: 100%; max-width: 500px; margin: 0 auto; display: block; height: 56px; border-radius: 16px; border: none; font-family: var(--fd); font-size: 17px; font-weight: 700; cursor: pointer; transition: all .25s; letter-spacing: -.2px; }
-.bot-cta.start { background: var(--grad); color: #fff; box-shadow: 0 8px 30px rgba(255,60,171,.3); }
-.bot-cta.start:hover { box-shadow: 0 10px 36px rgba(255,60,171,.45); }
-.bot-cta.stop  { background: var(--s2); border: 1.5px solid var(--pk); color: var(--pk); }
-.bot-cta.dis   { background: var(--s2); color: var(--muted); cursor: not-allowed; }
-
-/* ── SETTINGS OVERLAY ────────────────────────────────────────────────── */
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 300; opacity: 0; pointer-events: none; transition: opacity .25s; }
-.overlay.open { opacity: 1; pointer-events: all; }
-.settings-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 400; background: var(--s1); border-radius: 20px 20px 0 0; border-top: 1px solid var(--border2); padding: 20px 16px 36px; transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1); max-height: 85vh; overflow-y: auto; }
-.settings-sheet.open { transform: translateY(0); }
-.sheet-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 18px; }
-.sheet-title { font-family: var(--fd); font-size: 17px; font-weight: 700; margin-bottom: 16px; }
-
-/* ── RANGE SLIDER ────────────────────────────────────────────────────── */
-.slider-row { margin-bottom: 12px; }
-.slider-head { display: flex; justify-content: space-between; margin-bottom: 6px; }
-.slider-name { font-size: 13px; color: var(--sub); }
-.slider-val  { font-family: var(--fm); font-size: 12px; color: var(--pk); }
-input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--s3); outline: none; cursor: pointer; }
-input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--pk); box-shadow: 0 0 8px rgba(255,60,171,.4); }
-
-/* ── TOAST ───────────────────────────────────────────────────────────── */
-.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); z-index: 500; background: var(--s2); border: 1px solid var(--border2); border-radius: 12px; padding: 10px 18px; font-size: 13px; font-weight: 500; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; }
-.toast.ok  { border-color: rgba(0,229,160,.4); color: var(--gr); }
-.toast.err { border-color: rgba(255,60,171,.4); color: var(--pk); }
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ── PUBLISHER STATUS BADGE ──────────────────────────────────────────── */
-.pub-status { display: flex; align-items: center; gap: 7px; font-size: 12.5px; padding: 8px 12px; border-radius: 9px; background: var(--s2); border: 1px solid var(--border); }
-.pub-status.ok  { border-color: rgba(0,229,160,.3); }
-.pub-status.nok { border-color: rgba(255,140,66,.3); color: var(--or); }
-.url-preview { font-family: var(--fm); font-size: 11px; color: var(--muted); word-break: break-all; margin-top: 5px; }
 </style>
 </head>
 <body>
+<div class="app">
 
-<!-- TOPBAR -->
-<div class="topbar">
-  <div class="logo"><span class="logo-mark"></span>flux<em>r</em></div>
-  <div class="topright">
-    <div class="srv"><div class="dot" id="dot"></div><span id="srv-label">Pripájam...</span></div>
-    <div id="user-chip" style="display:none;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 4px;cursor:pointer" onclick="toggleUserMenu()">
-      <img id="user-avatar" src="" width="24" height="24" style="border-radius:50%;object-fit:cover;display:none">
-      <span id="user-name" style="font-size:12px;font-weight:600;color:var(--sub)">@</span>
-      <span style="color:var(--muted);font-size:11px">▾</span>
-    </div>
-    <div id="user-menu" style="display:none;position:absolute;top:52px;right:12px;background:var(--s1);border:1px solid var(--border2);border-radius:12px;padding:8px;z-index:999;min-width:160px">
-      <a href="/auth/logout" style="display:flex;align-items:center;gap:8px;padding:9px 12px;color:var(--pk);text-decoration:none;font-size:13px;font-weight:600;border-radius:8px" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='none'">🚪 Odhlásiť sa</a>
-    </div>
-    <div class="settings-btn" onclick="openSettings()" title="Nastavenia">⚙️</div>
-  </div>
-</div>
-
-<!-- MAIN TABS -->
-<div class="tabs-nav">
-  <div class="tab-btn active" onclick="showTab('pub')" id="t-pub">📤 Publikovať</div>
-  <div class="tab-btn" onclick="showTab('plan')" id="t-plan">📅 Plán</div>
-  <div class="tab-btn" onclick="showTab('bot')" id="t-bot">🤖 Bot</div>
-</div>
-
-<!-- ════ PUBLISHER PANE ═══════════════════════════════════════════════ -->
-<div class="pane active" id="pane-pub">
-
-  <div class="sub-tabs">
-    <div class="sub-tab active" onclick="setPubType('post')"  id="st-post">📸 Post</div>
-    <div class="sub-tab"       onclick="setPubType('reel')"  id="st-reel">🎬 Reel</div>
-    <div class="sub-tab"       onclick="setPubType('story')" id="st-story">⚡ Story</div>
-  </div>
-
-  <!-- Media drop zone -->
-  <div class="card">
-    <div class="card-body" style="padding-bottom:8px">
-      <div id="dz-preview" class="dz-preview" style="display:none">
-        <img id="dz-img" style="display:none">
-        <video id="dz-vid" controls style="display:none"></video>
-        <button class="dz-clear" onclick="clearMedia()">✕</button>
-      </div>
-      <div class="dropzone" id="dropzone" ondragover="dzDrag(event,true)" ondragleave="dzDrag(event,false)" ondrop="dzDrop(event)">
-        <input type="file" id="dz-file" accept="image/*,video/mp4,video/quicktime" onchange="handleFile(this.files[0])">
-        <span class="dz-icon" id="dz-icon">🖼️</span>
-        <div class="dz-label" id="dz-label">Pretiahni alebo klikni</div>
-        <div class="dz-sub" id="dz-sub">JPG, PNG, MP4, MOV</div>
-      </div>
-      <div class="dz-upload-progress" id="upload-prog">
-        <div class="dz-upload-progress-bar" id="upload-bar"></div>
-      </div>
-      <div id="url-row" style="margin-top:6px">
-        <div class="field-group">
-          <div class="field-label">alebo URL média</div>
-          <input type="url" id="media-url" placeholder="https://..." oninput="updateMediaPreviewFromUrl()">
-          <div class="url-preview" id="url-preview"></div>
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand"><span class="logo-mark"></span>flux<em>r</em></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="sidebar-foot">
+      <div class="acct-mini" onclick="navTo('settings')">
+        <img id="am-avatar" src="" alt="">
+        <div style="min-width:0">
+          <div class="am-name" id="am-name">—</div>
+          <div class="am-sub" id="am-sub">načítavam…</div>
         </div>
       </div>
     </div>
-  </div>
+  </aside>
 
-  <!-- Caption + AI -->
-  <div class="card">
-    <div class="card-head">
-      <div class="card-title">Popis</div>
-      <button class="btn btn-ghost" onclick="toggleAI()">✨ AI asistent</button>
-    </div>
-    <div class="ai-panel" id="ai-panel">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-        <select id="ai-niche" style="flex:1;min-width:110px;font-size:12.5px;padding:7px 10px">
-          <option value="lifestyle">Lifestyle</option>
-          <option value="ai influencer">AI Influencer</option>
-          <option value="fitness">Fitness</option>
-          <option value="fashion">Fashion</option>
-          <option value="music/rave">Music / Rave</option>
-          <option value="hip-hop">Hip-Hop</option>
-          <option value="photography">Photography</option>
-          <option value="tech">Tech</option>
-        </select>
-        <select id="ai-tone" style="flex:1;min-width:110px;font-size:12.5px;padding:7px 10px">
-          <option value="engaging">Engaging</option>
-          <option value="hype">Hype 🔥</option>
-          <option value="aesthetic">Aesthetic</option>
-          <option value="minimal">Minimal</option>
-          <option value="funny">Funny</option>
-        </select>
-        <select id="ai-lang" style="flex:1;min-width:90px;font-size:12.5px;padding:7px 10px">
-          <option value="en">English</option>
-          <option value="sk">Slovensky</option>
-        </select>
+  <!-- MAIN -->
+  <div class="main">
+    <header class="topbar">
+      <div class="page-title" id="page-title">Prehľad</div>
+      <div class="topright">
+        <div class="srv"><span class="dot" id="dot"></span><span id="srv-label">Pripájam…</span></div>
+        <button class="btn btn-ghost" onclick="navTo('settings')">⚙️ Nastavenia</button>
       </div>
-      <input type="text" id="ai-kw" placeholder="Kľúčové slová (voliteľné)..." style="margin-bottom:8px">
-      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="genCaption()">✨ Generovať</button>
-      <div id="ai-results"></div>
-    </div>
-    <div class="card-body">
-      <div class="field-group">
-        <div class="field-label">Popis <span class="char-count" id="cap-cc">0 / 2200</span></div>
-        <textarea id="caption" placeholder="Napíš alebo vygeneruj popis..." oninput="updateCharCount()" rows="4"></textarea>
-      </div>
-      <div class="field-group">
-        <div class="field-label">Hashtagy</div>
-        <div class="chips-wrap" id="hashtag-chips"></div>
-        <div class="chip-input-row">
-          <input type="text" id="ht-input" placeholder="#hashtag..." onkeydown="if(event.key==='Enter'||event.key===' ')addChip('hashtag')">
-          <button class="chip-add-btn" onclick="addChip('hashtag')">+ Pridať</button>
+    </header>
+
+    <div class="content">
+
+      <!-- ════ OVERVIEW ════ -->
+      <section class="page active" id="page-overview">
+        <div class="hero" style="margin-bottom:18px">
+          <img id="ov-avatar" src="" alt="">
+          <div style="flex:1;min-width:0">
+            <div class="h-name"><span id="ov-name">—</span><span id="ov-badge"></span></div>
+            <div class="h-meta" id="ov-meta">—</div>
+            <div class="h-foll">
+              <div><b id="ov-foll">—</b><span>Followeri</span></div>
+              <div><b id="ov-sched">0</b><span>Naplánované</span></div>
+              <div><b id="ov-actions">0</b><span>Akcie bota</span></div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="field-group">
-        <div class="field-label">Tagnutie účtov</div>
-        <div class="chips-wrap" id="mention-chips"></div>
-        <div class="chip-input-row">
-          <input type="text" id="mt-input" placeholder="@účet..." onkeydown="if(event.key==='Enter')addChip('mention')">
-          <button class="chip-add-btn" onclick="addChip('mention')">+ Pridať</button>
+
+        <div class="section-label">Štatistiky bota</div>
+        <div class="stats" style="margin-bottom:8px">
+          <div class="stat"><div class="st-l">❤️ Lajky (celkom)</div><div class="st-v pk" id="ov-likes">—</div><div class="st-s" id="ov-likes-s">táto relácia: 0</div></div>
+          <div class="stat"><div class="st-l">💬 Komentáre</div><div class="st-v gr" id="ov-cmt">—</div><div class="st-s" id="ov-cmt-s">táto relácia: 0</div></div>
+          <div class="stat"><div class="st-l">📸 Posty (relácia)</div><div class="st-v bl" id="ov-posts">—</div><div class="st-s">prejdené príspevky</div></div>
+          <div class="stat"><div class="st-l">⏱ Čas behu</div><div class="st-v" id="ov-time" style="color:var(--sub)">—</div><div class="st-s" id="ov-running">neaktívny</div></div>
         </div>
-      </div>
-      <!-- Music (len pre Reel) -->
-      <div id="music-section" style="display:none">
-        <div class="field-group">
-          <div class="field-label">🎵 Hudba (informatívne – nastaví sa ručne v IG)</div>
-          <input type="text" id="music-field" placeholder="Názov – Interpret...">
+
+        <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:22px">
+          <div class="card">
+            <div class="card-head"><div class="card-title">🩺 Stav systému</div></div>
+            <div class="card-body" style="padding-top:6px;padding-bottom:6px">
+              <div class="health" id="health"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-title">⚡ Rýchle akcie</div></div>
+            <div class="card-body">
+              <div class="quick">
+                <div class="qa" onclick="navTo('compose')"><span class="qa-ic">📤</span><span class="qa-t">Publikovať</span><span class="qa-d">Nový post, reel či story</span></div>
+                <div class="qa" onclick="navTo('schedule')"><span class="qa-ic">📅</span><span class="qa-t">Plán</span><span class="qa-d">Naplánovaný obsah</span></div>
+                <div class="qa" onclick="navTo('bot')"><span class="qa-ic">🤖</span><span class="qa-t">Bot</span><span class="qa-d">Reach booster</span></div>
+              </div>
+              <div class="hint" style="margin-top:16px">💡 <b>Tip:</b> Najlepší čas na publikovanie pre AI/lifestyle obsah býva <b>11:00–13:00</b> a <b>19:00–21:00</b>.</div>
+            </div>
+          </div>
         </div>
-        <div class="section-label" style="margin-top:6px">Trending zvuky pre AI influencers</div>
-        <div class="music-suggestions" id="music-sugg"></div>
-      </div>
+      </section>
+
+      <!-- ════ COMPOSE ════ -->
+      <section class="page" id="page-compose">
+        <div class="compose-grid">
+          <div>
+            <div class="seg" style="margin-bottom:16px">
+              <button class="seg-btn active sg-pk" id="st-post"  onclick="setPubType('post')">📸 Post</button>
+              <button class="seg-btn" id="st-reel"  onclick="setPubType('reel')">🎬 Reel</button>
+              <button class="seg-btn" id="st-story" onclick="setPubType('story')">⚡ Story</button>
+            </div>
+
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-body">
+                <div id="dz-preview" class="dz-preview" style="display:none">
+                  <img id="dz-img" style="display:none">
+                  <video id="dz-vid" controls style="display:none"></video>
+                  <button class="dz-clear" onclick="clearMedia()">✕</button>
+                </div>
+                <div class="dropzone" id="dropzone" ondragover="dzDrag(event,true)" ondragleave="dzDrag(event,false)" ondrop="dzDrop(event)">
+                  <input type="file" id="dz-file" accept="image/*,video/mp4,video/quicktime" onchange="handleFile(this.files[0])">
+                  <span class="dz-icon" id="dz-icon">🖼️</span>
+                  <div class="dz-label">Pretiahni súbor alebo klikni</div>
+                  <div class="dz-sub" id="dz-sub">JPG, PNG, MP4, MOV</div>
+                </div>
+                <div class="upbar" id="upbar"><div class="upbar-fill" id="upbar-fill"></div></div>
+                <div class="field" style="margin-top:14px;margin-bottom:0">
+                  <div class="field-label">alebo URL média</div>
+                  <input type="url" id="media-url" placeholder="https://…" oninput="onUrlInput()">
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <div class="card-title">✍️ Popis</div>
+                <button class="btn btn-ghost" onclick="toggleAI()">✨ AI asistent</button>
+              </div>
+              <div class="card-body">
+                <div class="ai-panel" id="ai-panel">
+                  <div class="ai-row">
+                    <select id="ai-niche">
+                      <option value="lifestyle">Lifestyle</option><option value="ai influencer">AI Influencer</option>
+                      <option value="fitness">Fitness</option><option value="fashion">Fashion</option>
+                      <option value="music/rave">Music / Rave</option><option value="travel">Travel</option>
+                      <option value="photography">Photography</option><option value="tech">Tech</option>
+                    </select>
+                    <select id="ai-tone">
+                      <option value="engaging">Engaging</option><option value="hype">Hype 🔥</option>
+                      <option value="aesthetic">Aesthetic</option><option value="minimal">Minimal</option><option value="funny">Funny</option>
+                    </select>
+                    <select id="ai-lang"><option value="en">English</option><option value="sk">Slovensky</option></select>
+                  </div>
+                  <input type="text" id="ai-kw" placeholder="Kľúčové slová (voliteľné)…" style="margin-bottom:11px">
+                  <button class="btn btn-primary btn-block" onclick="genCaption()">✨ Generovať popisy</button>
+                  <div id="ai-results"></div>
+                </div>
+                <div class="field">
+                  <div class="field-label">Text <span class="char-count" id="cap-cc">0 / 2200</span></div>
+                  <textarea id="caption" placeholder="Napíš alebo vygeneruj popis…" oninput="onCaption()"></textarea>
+                </div>
+                <div class="field">
+                  <div class="field-label">Hashtagy</div>
+                  <div class="chips-wrap" id="hashtag-chips"></div>
+                  <div class="chip-row">
+                    <input type="text" id="ht-input" placeholder="#hashtag…" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();addChip('hashtag')}">
+                    <button class="chip-add" onclick="addChip('hashtag')">+ Pridať</button>
+                  </div>
+                  <div class="preset-pills" id="ht-presets"></div>
+                </div>
+                <div class="field">
+                  <div class="field-label">Tagnutie účtov</div>
+                  <div class="chips-wrap" id="mention-chips"></div>
+                  <div class="chip-row">
+                    <input type="text" id="mt-input" placeholder="@účet…" onkeydown="if(event.key==='Enter'){event.preventDefault();addChip('mention')}">
+                    <button class="chip-add" onclick="addChip('mention')">+ Pridať</button>
+                  </div>
+                </div>
+                <div id="music-section" style="display:none">
+                  <div class="field">
+                    <div class="field-label">🎵 Hudba (informatívne – nastavíš ručne v IG)</div>
+                    <input type="text" id="music-field" placeholder="Názov – Interpret…">
+                  </div>
+                  <div class="music-sugg" id="music-sugg"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="btn-row" style="margin-top:16px">
+              <button class="btn btn-secondary" style="flex:1" onclick="toggleSchedRow()">📅 Naplánovať</button>
+              <button class="btn btn-primary" style="flex:1.4" id="publish-btn" onclick="publishNow()">🚀 Publikovať teraz</button>
+            </div>
+            <div class="card" id="sched-row" style="display:none;margin-top:14px">
+              <div class="card-body">
+                <div class="field" style="margin-bottom:12px">
+                  <div class="field-label">Dátum a čas</div>
+                  <input type="datetime-local" id="sched-dt">
+                </div>
+                <button class="btn btn-primary btn-block" onclick="schedulePost()">📅 Pridať do plánu</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- live preview -->
+          <div class="preview-sticky">
+            <div class="section-label">Náhľad</div>
+            <div class="phone">
+              <div class="ph-top">
+                <img id="ph-avatar" src="">
+                <span class="ph-u" id="ph-user">username</span>
+                <span class="ph-dot">⋯</span>
+              </div>
+              <div class="ph-media" id="ph-media"></div>
+              <div class="ph-actions"><span>♡</span><span>💬</span><span>➤</span><span class="spacer"></span><span>🔖</span></div>
+              <div class="ph-cap" id="ph-cap"><b id="ph-user2">username</b> <span id="ph-text"></span> <span class="ph-tags" id="ph-tags"></span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ════ SCHEDULE ════ -->
+      <section class="page" id="page-schedule">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div class="section-label" style="margin:0">Naplánované príspevky</div>
+          <button class="btn btn-ghost" onclick="loadSchedule()">↻ Obnoviť</button>
+        </div>
+        <div id="sched-list"><div class="empty"><div class="ei">📭</div><div class="et">Žiadne naplánované príspevky</div></div></div>
+      </section>
+
+      <!-- ════ BOT ════ -->
+      <section class="page" id="page-bot">
+        <div class="bot-banner" id="bot-banner">
+          <div class="bb-left">
+            <div class="bb-dot"></div>
+            <div><div class="bb-label" id="bb-label">Neaktívny</div><div class="bb-meta" id="bb-meta">Stlač štart</div></div>
+          </div>
+          <button class="cta-bot dis" id="cta-bot" onclick="toggleBot()" style="padding:0 26px">⏳ Pripájam…</button>
+        </div>
+
+        <div id="bot-selenium-warn" class="card" style="display:none;margin-bottom:16px;border-color:rgba(255,140,66,.35)">
+          <div class="card-body" style="display:flex;gap:12px;align-items:flex-start">
+            <span style="font-size:20px">⚠️</span>
+            <div class="hint">Reach Booster (Selenium) <b>nie je dostupný na tomto serveri</b>. Bot beží len lokálne s pripojeným Chrome (port 9222). Publikovanie a plánovač fungujú normálne.</div>
+          </div>
+        </div>
+
+        <div class="stats" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+          <div class="stat"><div class="st-l">❤️ Lajky</div><div class="st-v pk" id="b-likes">—</div><div class="st-s">celkom <span id="b-likes-t">—</span></div></div>
+          <div class="stat"><div class="st-l">💬 Komentáre</div><div class="st-v gr" id="b-cmt">—</div><div class="st-s">celkom <span id="b-cmt-t">—</span></div></div>
+          <div class="stat"><div class="st-l">📸 Posty / ⏱ Beh</div><div class="st-v bl" id="b-posts" style="font-size:21px">—</div><div class="st-s" id="b-time">—</div></div>
+        </div>
+
+        <div class="grid" style="grid-template-columns:1fr 1fr">
+          <div>
+            <div class="section-label">Režim</div>
+            <div class="seg" style="margin-bottom:16px">
+              <button class="seg-btn active" id="bm-smart_feed" onclick="setBotMode('smart_feed')">📱 Feed</button>
+              <button class="seg-btn" id="bm-viral_accounts" onclick="setBotMode('viral_accounts')">👤 Účty</button>
+              <button class="seg-btn" id="bm-hashtags" onclick="setBotMode('hashtags')">🔎 Tagy</button>
+            </div>
+            <div class="card" id="viral-section" style="display:none;margin-bottom:16px">
+              <div class="card-head"><div class="card-title">Viral účty</div></div>
+              <div class="card-body">
+                <div class="chips-wrap" id="viral-chips"></div>
+                <div class="chip-row"><input type="text" id="viral-input" placeholder="@účet…" onkeydown="if(event.key==='Enter')addBotChip('viral')"><button class="chip-add" onclick="addBotChip('viral')">+</button></div>
+              </div>
+            </div>
+            <div class="card" id="hash-section" style="display:none;margin-bottom:16px">
+              <div class="card-head"><div class="card-title">Hashtagy</div></div>
+              <div class="card-body">
+                <div class="chips-wrap" id="hash-chips"></div>
+                <div class="chip-row"><input type="text" id="hash-input" placeholder="hashtag (bez #)…" onkeydown="if(event.key==='Enter')addBotChip('hash')"><button class="chip-add" onclick="addBotChip('hash')">+</button></div>
+              </div>
+            </div>
+            <div class="section-label">Akcie</div>
+            <div class="card"><div class="card-body" style="padding-top:4px;padding-bottom:4px">
+              <div class="toggle-row"><div><div class="tr-name">Lajkovanie</div><div class="tr-desc">Like na ~80 % postov</div></div><label class="tg"><input type="checkbox" id="t-like" checked><div class="tg-track"><div class="tg-thumb"></div></div></label></div>
+              <div class="toggle-row"><div><div class="tr-name">Komentovanie</div><div class="tr-desc">Náhodný komentár (~15 %)</div></div><label class="tg"><input type="checkbox" id="t-cmt" checked><div class="tg-track"><div class="tg-thumb"></div></div></label></div>
+              <div class="toggle-row"><div><div class="tr-name">Stories</div><div class="tr-desc">Prehliadanie stories (35 %)</div></div><label class="tg"><input type="checkbox" id="t-stories" checked><div class="tg-track"><div class="tg-thumb"></div></div></label></div>
+            </div></div>
+          </div>
+
+          <div>
+            <div class="section-label">Komentáre</div>
+            <div class="card" style="margin-bottom:16px"><div class="card-body">
+              <div id="cmt-list" style="display:flex;flex-direction:column;gap:7px"></div>
+              <div class="chip-row"><input type="text" id="cmt-input" placeholder="Nový komentár…" onkeydown="if(event.key==='Enter')addComment()"><button class="chip-add" onclick="addComment()">+ Pridať</button></div>
+            </div></div>
+            <div class="section-label">Rýchlosť</div>
+            <div class="card"><div class="card-body">
+              <div class="slider"><div class="slider-head"><span>Pauza min</span><span class="slider-val" id="v-pmin">9s</span></div><input type="range" id="s-pmin" min="5" max="40" value="9" oninput="v('pmin',this.value+'s')"></div>
+              <div class="slider"><div class="slider-head"><span>Pauza max</span><span class="slider-val" id="v-pmax">30s</span></div><input type="range" id="s-pmax" min="15" max="70" value="30" oninput="v('pmax',this.value+'s')"></div>
+              <div class="slider"><div class="slider-head"><span>Pauza medzi kolami</span><span class="slider-val" id="v-rp">100s</span></div><input type="range" id="s-rp" min="60" max="300" step="10" value="100" oninput="v('rp',this.value+'s')"></div>
+              <div class="slider" style="margin-bottom:0"><div class="slider-head"><span>Max akcií / deň</span><span class="slider-val" id="v-max">150</span></div><input type="range" id="s-max" min="50" max="250" step="10" value="150" oninput="v('max',this.value)"></div>
+            </div></div>
+          </div>
+        </div>
+
+        <div class="btn-row" style="margin:18px 0">
+          <button class="btn btn-secondary" onclick="clearSeen()">🗑 Vymazať históriu</button>
+          <button class="btn btn-ghost" onclick="saveConfig()">💾 Uložiť nastavenia</button>
+        </div>
+
+        <div class="section-label">Živý log</div>
+        <div class="log-wrap" id="log"><div class="empty" style="padding:30px"><div class="et">Žiadne záznamy</div></div></div>
+      </section>
+
+      <!-- ════ SETTINGS ════ -->
+      <section class="page" id="page-settings">
+        <div class="grid" style="grid-template-columns:1fr 1fr">
+          <div class="card">
+            <div class="card-head"><div class="card-title">👤 Účet</div></div>
+            <div class="card-body">
+              <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+                <img id="set-avatar" src="" width="56" height="56" style="border-radius:50%;object-fit:cover;border:2px solid var(--border2);background:var(--s3)">
+                <div>
+                  <div style="font-family:var(--fd);font-weight:700;font-size:16px" id="set-name">—</div>
+                  <div style="font-family:var(--fm);font-size:11.5px;color:var(--muted);margin-top:3px">IG ID: <span id="set-uid">—</span></div>
+                  <div id="set-badge" style="margin-top:6px"></div>
+                </div>
+              </div>
+              <button class="btn btn-danger btn-block" onclick="location='/auth/logout'">🚪 Odhlásiť sa</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head"><div class="card-title">🔑 Publisher — ručné nastavenie</div></div>
+            <div class="card-body">
+              <div class="hint" style="margin-bottom:14px">Ak sa IG Business účet nenašiel automaticky, vlož sem <b>IG Business User ID</b> a <b>Page Access Token</b> z Meta Developers.</div>
+              <div class="field"><div class="field-label">IG Business User ID</div><input type="text" id="cfg-uid" placeholder="17841…"></div>
+              <div class="field"><div class="field-label">Access Token</div><input type="password" id="cfg-token" placeholder="EAAG…" oninput="_tokChanged=true"></div>
+              <div class="field"><div class="field-label">Verejná URL servera (pre médiá)</div><input type="url" id="cfg-puburl" placeholder="https://…"></div>
+              <div class="btn-row">
+                <button class="btn btn-secondary" style="flex:1" onclick="savePubConfig()">💾 Uložiť</button>
+                <button class="btn btn-primary" style="flex:1" onclick="verifyAccount()">🔍 Overiť token</button>
+              </div>
+              <div class="verify-box" id="verify-result"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:18px">
+          <div class="card-head"><div class="card-title">🩺 Diagnostika</div></div>
+          <div class="card-body" style="padding-top:4px;padding-bottom:4px"><div class="health" id="health2"></div></div>
+        </div>
+      </section>
+
     </div>
   </div>
-
-  <!-- Publish actions -->
-  <div class="btn-row" style="margin-bottom:14px">
-    <button class="btn btn-secondary" onclick="openScheduleModal()">📅 Naplánovať</button>
-    <button class="btn btn-primary"   onclick="publishNow()">🚀 Publikovať teraz</button>
-  </div>
-
-  <!-- Schedule mini modal -->
-  <div class="card" id="schedule-card" style="display:none">
-    <div class="card-head">
-      <div class="card-title">Naplánovať príspevok</div>
-      <button class="btn-ghost btn" onclick="closeScheduleModal()">✕</button>
-    </div>
-    <div class="card-body">
-      <div class="field-group">
-        <div class="field-label">Dátum a čas</div>
-        <input type="datetime-local" id="sched-dt">
-      </div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="schedulePost()">📅 Pridať do plánu</button>
-    </div>
-  </div>
-
 </div>
 
-<!-- ════ PLAN PANE ═══════════════════════════════════════════════════ -->
-<div class="pane" id="pane-plan">
-  <div class="section-label" style="margin-bottom:10px">Naplánované príspevky</div>
-  <div id="sched-list">
-    <div class="empty-state"><div class="ei">📭</div><div class="et">Žiadne naplánované príspevky</div></div>
-  </div>
-</div>
-
-<!-- ════ BOT PANE ════════════════════════════════════════════════════ -->
-<div class="pane" id="pane-bot">
-
-  <div class="bot-banner" id="bot-banner">
-    <div class="bb-left">
-      <div class="bb-dot"></div>
-      <div>
-        <div class="bb-label" id="bb-label">Neaktívny</div>
-        <div class="bb-meta" id="bb-meta">Stlač štart</div>
-      </div>
-    </div>
-    <span id="bb-tag" style="font-family:var(--fm);font-size:12px;color:var(--muted)"></span>
-  </div>
-
-  <div class="stats-grid">
-    <div class="stat-card">
-      <div class="stat-label">❤️ Lajky</div>
-      <div class="stat-val pk" id="s-likes">—</div>
-      <div class="stat-sub">celkom <span id="s-likes-t">—</span></div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">💬 Komentáre</div>
-      <div class="stat-val gr" id="s-cmt">—</div>
-      <div class="stat-sub">celkom <span id="s-cmt-t">—</span></div>
-    </div>
-    <div class="stat-card stat-wide">
-      <div><div class="stat-label">📸 Posty</div><div class="stat-val bl" id="s-posts" style="font-size:22px">—</div></div>
-      <div style="text-align:right"><div class="stat-label">⏱ Beh</div><div class="stat-val" id="s-time" style="font-size:18px;color:var(--muted)">—</div></div>
-    </div>
-  </div>
-
-  <!-- Mode selector -->
-  <div class="section-label">Režim</div>
-  <div class="sub-tabs" style="margin-bottom:12px">
-    <div class="sub-tab active" onclick="setBotMode('smart_feed')"     id="bm-smart">📱 Smart Feed</div>
-    <div class="sub-tab"       onclick="setBotMode('viral_accounts')"  id="bm-viral">👤 Viral účty</div>
-    <div class="sub-tab"       onclick="setBotMode('hashtags')"        id="bm-hash">🔎 Hashtagy</div>
-  </div>
-
-  <!-- Viral accounts (shown when mode=viral_accounts) -->
-  <div id="viral-section" style="display:none">
-    <div class="card">
-      <div class="card-head"><div class="card-title">Viral účty</div></div>
-      <div class="card-body">
-        <div class="chips-wrap" id="viral-chips"></div>
-        <div class="chip-input-row" style="margin-top:8px">
-          <input type="text" id="viral-input" placeholder="@účet..." onkeydown="if(event.key==='Enter')addBotChip('viral')">
-          <button class="chip-add-btn" onclick="addBotChip('viral')">+ Pridať</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Hashtags (shown when mode=hashtags) -->
-  <div id="hash-section" style="display:none">
-    <div class="card">
-      <div class="card-head"><div class="card-title">Hashtagy</div></div>
-      <div class="card-body">
-        <div class="chips-wrap" id="hash-chips"></div>
-        <div class="chip-input-row" style="margin-top:8px">
-          <input type="text" id="hash-input" placeholder="hashtag (bez #)..." onkeydown="if(event.key==='Enter')addBotChip('hash')">
-          <button class="chip-add-btn" onclick="addBotChip('hash')">+ Pridať</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Toggles -->
-  <div class="section-label">Akcie</div>
-  <div class="card"><div class="card-body" style="padding:0 16px">
-    <div class="row-toggle"><div class="rt-info"><div class="rt-name">Lajkovanie</div><div class="rt-desc">Like na ~80 % postov</div></div><label class="toggle-wrap"><input type="checkbox" id="t-like" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label></div>
-    <div class="row-toggle"><div class="rt-info"><div class="rt-name">Komentovanie</div><div class="rt-desc">Náhodný komentár (~15 %)</div></div><label class="toggle-wrap"><input type="checkbox" id="t-cmt" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label></div>
-    <div class="row-toggle"><div class="rt-info"><div class="rt-name">Stories</div><div class="rt-desc">Prehliadanie stories (35 %)</div></div><label class="toggle-wrap"><input type="checkbox" id="t-stories" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label></div>
-  </div></div>
-
-  <!-- Comments list -->
-  <div class="section-label">Komentáre</div>
-  <div class="card">
-    <div class="card-body">
-      <div id="cmt-list" style="display:flex;flex-direction:column;gap:6px"></div>
-      <div class="chip-input-row" style="margin-top:10px">
-        <input type="text" id="cmt-input" placeholder="Nový komentár..." onkeydown="if(event.key==='Enter')addComment()">
-        <button class="chip-add-btn" onclick="addComment()">+ Pridať</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Save + clear -->
-  <div class="btn-row" style="margin-bottom:14px">
-    <button class="btn btn-secondary" onclick="clearSeen()">🗑 Vymazať históriu</button>
-    <button class="btn btn-ghost"     onclick="saveConfig()">💾 Uložiť</button>
-  </div>
-
-  <!-- Log -->
-  <div class="section-label">Živý log</div>
-  <div class="log-wrap" id="log"></div>
-
-  <div style="height:70px"></div>
-</div>
-
-<!-- BOT CTA (fixed bottom) -->
-<div class="bot-cta-wrap" id="bot-cta-wrap" style="display:none">
-  <button class="bot-cta dis" id="bot-cta" onclick="toggleBot()">⏳ Pripájam...</button>
-</div>
-
-<div class="overlay" id="overlay" onclick="closeSettings()"></div>
-<div class="settings-sheet" id="settings-sheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-title">⚙️ Nastavenia</div>
-
-  <div class="section-label">Prihlásený účet</div>
-  <div id="settings-account" style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
-    <img id="sa-avatar" src="" width="44" height="44" style="border-radius:50%;object-fit:cover;border:2px solid var(--border2)">
-    <div>
-      <div id="sa-username" style="font-family:var(--fd);font-weight:700;font-size:15px">—</div>
-      <div id="sa-uid" style="font-family:var(--fm);font-size:11px;color:var(--muted);margin-top:2px">IG ID: —</div>
-      <div id="sa-token" style="font-size:11px;color:var(--gr);margin-top:3px">—</div>
-    </div>
-  </div>
-  <button onclick="window.location='/auth/logout'" class="btn btn-danger" style="width:100%;justify-content:center;margin-bottom:20px">🚪 Odhlásiť sa</button>
-  <button onclick="verifyAccount()" class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:6px">🔍 Overiť token</button>
-  <div id="verify-result" style="font-size:13px;text-align:center;color:var(--muted);margin-bottom:16px"></div>
-
-  <div class="section-label">Rýchlosť bota</div>
-  <div class="slider-row"><div class="slider-head"><span class="slider-name">Pauza min (s)</span><span class="slider-val" id="v-pmin">9s</span></div><input type="range" id="s-pmin" min="5" max="40" value="9" oninput="document.getElementById('v-pmin').textContent=this.value+'s'"></div>
-  <div class="slider-row"><div class="slider-head"><span class="slider-name">Pauza max (s)</span><span class="slider-val" id="v-pmax">30s</span></div><input type="range" id="s-pmax" min="15" max="70" value="30" oninput="document.getElementById('v-pmax').textContent=this.value+'s'"></div>
-  <div class="slider-row"><div class="slider-head"><span class="slider-name">Pauza medzi kolami</span><span class="slider-val" id="v-rp">100s</span></div><input type="range" id="s-rp" min="60" max="300" step="10" value="100" oninput="document.getElementById('v-rp').textContent=this.value+'s'"></div>
-  <div class="slider-row"><div class="slider-head"><span class="slider-name">Max akcií / deň</span><span class="slider-val" id="v-max">150</span></div><input type="range" id="s-max" min="50" max="250" step="10" value="150" oninput="document.getElementById('v-max').textContent=this.value"></div>
-</div>
-
+<!-- mobile bottom nav -->
+<nav class="mobnav" id="mobnav"></nav>
 <div class="toast" id="toast"></div>
 
 <script>
-// ── STATE ────────────────────────────────────────────────────────────────────
 const API = window.location.origin;
-let online = false, running = false;
-let pubType   = 'post';
-let botMode   = 'smart_feed';
-let hashtags  = [], mentions = [];
-let botHashtags = [], botViralAccounts = [], comments = [];
-let uploadedUrl = '';
-let cfg = {};
+let online=false, running=false, me={}, sys={};
+let pubType='post', botMode='smart_feed';
+let hashtags=[], mentions=[], botHashtags=[], botViral=[], comments=[];
+let uploadedUrl='', cfg={}, _tokChanged=false;
 
-const TRENDING_MUSIC = {
-  'post':  ['Espresso – Sabrina Carpenter', 'Carnival – ¥$', 'Starboy – The Weeknd', 'Levitating – Dua Lipa'],
-  'reel':  ['Harlequin – Lady Gaga', 'Beautiful Things – Benson Boone', 'Die With A Smile – Bruno Mars', 'Flowers – Miley Cyrus', 'Cruel Summer – Taylor Swift', 'Calm Down – Rema'],
-  'story': ['Too Sweet – Hozier', 'Water – Tyla', 'Greedy – Tate McRae']
+const PAGES=[
+  {id:'overview',ic:'🏠',label:'Prehľad'},
+  {id:'compose', ic:'📤',label:'Publikovať'},
+  {id:'schedule',ic:'📅',label:'Plán'},
+  {id:'bot',     ic:'🤖',label:'Bot'},
+  {id:'settings',ic:'⚙️',label:'Nastavenia'},
+];
+const HT_PRESETS={
+  'AI model':['aimodel','aiinfluencer','virtualmodel','aiart','digitalart'],
+  'Lifestyle':['lifestyle','aesthetic','vibes','dailylook','mood'],
+  'Fitness':['fitness','gymmotivation','fitgirl','workout','fitfam'],
+  'Fashion':['fashion','ootd','style','outfitinspo','streetwear'],
+};
+const TRENDING_MUSIC={
+  post:['Espresso – Sabrina Carpenter','Starboy – The Weeknd','Levitating – Dua Lipa'],
+  reel:['Beautiful Things – Benson Boone','Die With A Smile – Bruno Mars','Cruel Summer – Taylor Swift','Calm Down – Rema'],
+  story:['Too Sweet – Hozier','Water – Tyla','Greedy – Tate McRae']
 };
 
-// ── TABS ─────────────────────────────────────────────────────────────────────
-function showTab(t) {
-  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('pane-' + t).classList.add('active');
-  document.getElementById('t-' + t).classList.add('active');
-  document.getElementById('bot-cta-wrap').style.display = (t === 'bot') ? 'block' : 'none';
-  if (t === 'plan') loadSchedule();
+// ── NAV ──────────────────────────────────────────────
+function buildNav(){
+  const html=PAGES.map(p=>`<div class="nav-item" id="ni-${p.id}" onclick="navTo('${p.id}')">
+     <span class="ni-ic">${p.ic}</span><span class="nav-label">${p.label}</span>
+     ${p.id==='schedule'?'<span class="nav-badge" id="nb-sched">0</span>':''}</div>`).join('');
+  document.getElementById('nav').innerHTML=html;
+  document.getElementById('mobnav').innerHTML=PAGES.map(p=>`<div class="nav-item" id="mni-${p.id}" onclick="navTo('${p.id}')"><span class="ni-ic">${p.ic}</span><span class="nav-label">${p.label}</span></div>`).join('');
 }
-
-// ── PUB TYPE ─────────────────────────────────────────────────────────────────
-function setPubType(t) {
-  pubType = t;
-  ['post','reel','story'].forEach(x => document.getElementById('st-'+x).classList.toggle('active', x===t));
-  const icons = {post:'🖼️',reel:'🎬',story:'⚡'};
-  const subs  = {post:'JPG, PNG — вертикально 4:5',reel:'MP4, MOV — 9:16',story:'JPG, PNG, MP4 — 9:16'};
-  document.getElementById('dz-icon').textContent  = icons[t];
-  document.getElementById('dz-sub').textContent   = subs[t];
-  document.getElementById('music-section').style.display = (t === 'reel') ? 'block' : 'none';
-  renderMusicSugg();
-}
-
-function renderMusicSugg() {
-  const el = document.getElementById('music-sugg');
-  el.innerHTML = '';
-  (TRENDING_MUSIC[pubType] || []).forEach(m => {
-    const b = document.createElement('div');
-    b.className = 'music-pill';
-    b.textContent = '🎵 ' + m;
-    b.onclick = () => { document.getElementById('music-field').value = m; };
-    el.appendChild(b);
+function navTo(id){
+  PAGES.forEach(p=>{
+    document.getElementById('page-'+p.id).classList.toggle('active',p.id===id);
+    document.getElementById('ni-'+p.id)?.classList.toggle('active',p.id===id);
+    document.getElementById('mni-'+p.id)?.classList.toggle('active',p.id===id);
   });
+  document.getElementById('page-title').textContent=PAGES.find(p=>p.id===id).label;
+  if(id==='schedule') loadSchedule();
+  if(id==='settings') loadPubConfig();
+  window.scrollTo(0,0);
 }
 
-// ── DRAG & DROP ──────────────────────────────────────────────────────────────
-function dzDrag(e, on) { e.preventDefault(); document.getElementById('dropzone').classList.toggle('drag-over', on); }
-function dzDrop(e) { e.preventDefault(); dzDrag(e, false); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }
+// ── ME / SYSTEM ──────────────────────────────────────
+async function loadMe(){
+  try{
+    const r=await fetch(API+'/api/me'); me=await r.json();
+    if(!me.logged_in){ location='/'; return; }
+    const av=me.avatar||'';
+    const ph=av||'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="80" height="80"%3E%3Crect width="80" height="80" fill="%23262638"/%3E%3C/svg%3E';
+    ['am-avatar','ov-avatar','set-avatar','ph-avatar'].forEach(i=>document.getElementById(i).src=ph);
+    document.getElementById('am-name').textContent='@'+(me.username||'user');
+    document.getElementById('am-sub').textContent=me.ig_business?'IG Business':'len prihlásený';
+    document.getElementById('ov-name').textContent='@'+(me.username||'user');
+    document.getElementById('ov-foll').textContent=(me.followers||0).toLocaleString('sk-SK');
+    document.getElementById('ov-meta').textContent='Pripojené '+(me.connected_at?new Date(me.connected_at).toLocaleDateString('sk-SK'):'—');
+    document.getElementById('ov-badge').innerHTML=me.ig_business?'<span class="badge ok">✓ IG Business</span>':'<span class="badge bad">⚠ bez IG Business</span>';
+    document.getElementById('set-name').textContent='@'+(me.username||'user');
+    document.getElementById('set-uid').textContent=me.ig_user_id||'—';
+    document.getElementById('set-badge').innerHTML=me.ig_business?'<span class="badge ok">✓ IG Business — publikovanie aktívne</span>':'<span class="badge bad">⚠ bez IG Business — publikovanie vypnuté</span>';
+    ['ph-user','ph-user2'].forEach(i=>document.getElementById(i).textContent=me.username||'username');
+    // publish button gating
+    const pb=document.getElementById('publish-btn');
+    if(!me.ig_business){ pb.disabled=true; pb.title='Najprv prepoj IG Business účet (Nastavenia).'; }
+    else { pb.disabled=false; pb.title=''; }
+    renderHealth();
+  }catch(e){}
+}
+function renderHealth(){
+  const rows=[
+    {ic:'📤',t:'Publisher',ok:me.publisher_ready,d:me.publisher_ready?'Pripravený':'ig_publisher.py chýba'},
+    {ic:'📸',t:'IG Business účet',ok:me.ig_business,d:me.ig_business?'Prepojený — publikovanie funguje':'Nenájdený — prepni IG na Business/Creator alebo zadaj ID ručne'},
+    {ic:'✨',t:'AI asistent',ok:me.ai_ready,d:me.ai_ready?'Anthropic API pripojené':'Chýba ANTHROPIC_API_KEY na serveri'},
+    {ic:'🤖',t:'Reach Booster (bot)',ok:sys.selenium_available,d:sys.selenium_available?'Selenium dostupný':'Len lokálne (Selenium vypnutý na serveri)'},
+  ];
+  const html=rows.map(r=>`<div class="h-row"><div class="h-ic">${r.ic}</div>
+     <div class="h-tx"><div class="h-t">${r.t}</div><div class="h-d">${r.d}</div></div>
+     <span class="badge ${r.ok?'ok':'bad'}">${r.ok?'OK':'pozor'}</span></div>`).join('');
+  document.getElementById('health').innerHTML=html;
+  document.getElementById('health2').innerHTML=html;
+}
 
-function handleFile(file) {
-  if (!file) return;
-  const ext = file.name.split('.').pop().toLowerCase();
-  const isVideo = ['mp4','mov'].includes(ext);
-
-  // Show preview immediately
-  const prev = document.getElementById('dz-preview');
-  const img  = document.getElementById('dz-img');
-  const vid  = document.getElementById('dz-vid');
-  document.getElementById('dropzone').style.display = 'none';
-  prev.style.display = 'block';
-  if (isVideo) {
-    vid.style.display = 'block'; img.style.display = 'none';
-    vid.src = URL.createObjectURL(file);
-  } else {
-    img.style.display = 'block'; vid.style.display = 'none';
-    img.src = URL.createObjectURL(file);
-  }
-
-  // Upload to server
-  const prog = document.getElementById('upload-prog');
-  const bar  = document.getElementById('upload-bar');
-  prog.style.display = 'block'; bar.style.width = '0%';
-
-  const fd = new FormData(); fd.append('file', file);
-  const xhr = new XMLHttpRequest();
-  xhr.open('POST', API + '/api/pub/upload');
-  xhr.upload.onprogress = e => { if(e.lengthComputable) bar.style.width = (e.loaded/e.total*100)+'%'; };
-  xhr.onload = () => {
-    prog.style.display = 'none';
-    try {
-      const r = JSON.parse(xhr.responseText);
-      if (r.ok) {
-        uploadedUrl = r.url;
-        document.getElementById('media-url').value = r.url;
-        document.getElementById('url-preview').textContent = '✅ ' + r.url;
-        toast('Súbor nahraný', 'ok');
-      } else { toast('Chyba: ' + r.error, 'err'); }
-    } catch(e) { /* server offline, use local preview */ uploadedUrl = ''; }
-  };
-  xhr.onerror = () => { prog.style.display='none'; toast('Server offline – zadaj URL ručne', 'err'); };
+// ── COMPOSE ──────────────────────────────────────────
+function setPubType(t){
+  pubType=t;
+  ['post','reel','story'].forEach(x=>document.getElementById('st-'+x).classList.toggle('active',x===t));
+  const subs={post:'JPG, PNG — ideálne 4:5',reel:'MP4, MOV — 9:16',story:'JPG, PNG, MP4 — 9:16'};
+  document.getElementById('dz-sub').textContent=subs[t];
+  document.getElementById('music-section').style.display=(t==='reel')?'block':'none';
+  document.getElementById('ph-media').classList.toggle('story',t==='story');
+  renderMusic(); updatePreview();
+}
+function renderMusic(){
+  document.getElementById('music-sugg').innerHTML=(TRENDING_MUSIC[pubType]||[]).map(m=>
+    `<div class="music-pill" onclick="document.getElementById('music-field').value='${m.replace(/'/g,"")}'">🎵 ${m}</div>`).join('');
+}
+function dzDrag(e,on){e.preventDefault();document.getElementById('dropzone').classList.toggle('drag-over',on);}
+function dzDrop(e){e.preventDefault();dzDrag(e,false);if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);}
+function handleFile(file){
+  if(!file)return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  const isVid=['mp4','mov'].includes(ext);
+  const prev=document.getElementById('dz-preview'),img=document.getElementById('dz-img'),vid=document.getElementById('dz-vid');
+  document.getElementById('dropzone').style.display='none'; prev.style.display='block';
+  const objUrl=URL.createObjectURL(file);
+  if(isVid){vid.style.display='block';img.style.display='none';vid.src=objUrl;}
+  else{img.style.display='block';vid.style.display='none';img.src=objUrl;}
+  setPreviewMedia(objUrl,isVid);
+  const bar=document.getElementById('upbar'),fill=document.getElementById('upbar-fill');
+  bar.style.display='block';fill.style.width='0%';
+  const fd=new FormData();fd.append('file',file);
+  const xhr=new XMLHttpRequest();xhr.open('POST',API+'/api/pub/upload');
+  xhr.upload.onprogress=e=>{if(e.lengthComputable)fill.style.width=(e.loaded/e.total*100)+'%';};
+  xhr.onload=()=>{bar.style.display='none';try{const r=JSON.parse(xhr.responseText);
+    if(r.ok){uploadedUrl=r.url;document.getElementById('media-url').value=r.url;toast('Súbor nahraný','ok');}
+    else toast('Chyba: '+r.error,'err');}catch(e){toast('Chyba uploadu','err');}};
+  xhr.onerror=()=>{bar.style.display='none';toast('Upload zlyhal – zadaj URL ručne','err');};
   xhr.send(fd);
 }
+function clearMedia(){
+  document.getElementById('dz-preview').style.display='none';
+  document.getElementById('dropzone').style.display='block';
+  document.getElementById('dz-img').src='';document.getElementById('dz-vid').src='';
+  document.getElementById('media-url').value='';document.getElementById('dz-file').value='';
+  uploadedUrl='';setPreviewMedia('',false);
+}
+function onUrlInput(){const u=document.getElementById('media-url').value.trim();uploadedUrl=u;
+  setPreviewMedia(u, /\.(mp4|mov)/i.test(u));}
+function setPreviewMedia(url,isVid){
+  const m=document.getElementById('ph-media');
+  if(!url){m.innerHTML='';return;}
+  m.innerHTML=isVid?`<video src="${url}" muted></video>`:`<img src="${url}" onerror="this.remove()">`;
+}
+function updatePreview(){
+  document.getElementById('ph-text').textContent=document.getElementById('caption').value;
+  document.getElementById('ph-tags').textContent=hashtags.map(h=>'#'+h).join(' ');
+}
+function onCaption(){
+  const n=document.getElementById('caption').value.length;
+  const cc=document.getElementById('cap-cc');cc.textContent=n+' / 2200';cc.style.color=n>2200?'var(--rd)':'';
+  updatePreview();
+}
+function toggleAI(){document.getElementById('ai-panel').classList.toggle('open');}
 
-function clearMedia() {
-  document.getElementById('dz-preview').style.display = 'none';
-  document.getElementById('dropzone').style.display   = 'block';
-  document.getElementById('dz-img').src = '';
-  document.getElementById('dz-vid').src = '';
-  document.getElementById('media-url').value = '';
-  document.getElementById('url-preview').textContent = '';
-  document.getElementById('dz-file').value = '';
-  uploadedUrl = '';
+function addChip(type){
+  const inp=document.getElementById(type==='hashtag'?'ht-input':'mt-input');
+  let val=inp.value.trim().replace(/^[#@\s]+/,'');if(!val)return;
+  (type==='hashtag'?hashtags:mentions).push(val);inp.value='';renderChips(type);
+}
+function removeChip(type,i){(type==='hashtag'?hashtags:mentions).splice(i,1);renderChips(type);}
+function renderChips(type){
+  const arr=type==='hashtag'?hashtags:mentions, id=type==='hashtag'?'hashtag-chips':'mention-chips', pfx=type==='hashtag'?'#':'@';
+  document.getElementById(id).innerHTML=arr.map((v,i)=>`<div class="chip ${type==='mention'?'mt':''}">${pfx}${v}<button class="rm" onclick="removeChip('${type}',${i})">✕</button></div>`).join('');
+  updatePreview();
+}
+function renderPresets(){
+  document.getElementById('ht-presets').innerHTML=Object.keys(HT_PRESETS).map(k=>`<button class="preset" onclick="addPreset('${k}')">+ ${k}</button>`).join('');
+}
+function addPreset(k){HT_PRESETS[k].forEach(t=>{if(!hashtags.includes(t))hashtags.push(t);});renderChips('hashtag');toast(k+' pridané','ok');}
+
+async function genCaption(){
+  const res=document.getElementById('ai-results');
+  res.innerHTML='<div class="ai-msg">✨ Generujem…</div>';
+  try{
+    const r=await fetch(API+'/api/caption',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({type:pubType,niche:document.getElementById('ai-niche').value,tone:document.getElementById('ai-tone').value,lang:document.getElementById('ai-lang').value,keywords:document.getElementById('ai-kw').value})});
+    const data=await r.json();
+    if(!data.ok){res.innerHTML=`<div class="ai-msg" style="color:var(--or)">⚠️ ${data.error}</div>`;return;}
+    const caps=data.result?.captions||[];
+    if(!caps.length){res.innerHTML='<div class="ai-msg">Žiadne výsledky</div>';return;}
+    res.innerHTML=caps.map((c,i)=>`<div class="ai-item" onclick="applyCaption(${i})"><div>${c.text}</div><div class="ai-tags">${(c.hashtags||[]).slice(0,8).map(t=>`<span class="ai-tag">#${t}</span>`).join('')}</div></div>`).join('');
+    res._data=caps;
+  }catch(e){res.innerHTML='<div class="ai-msg" style="color:var(--rd)">Server offline</div>';}
+}
+function applyCaption(i){
+  const c=(document.getElementById('ai-results')._data||[])[i];if(!c)return;
+  document.getElementById('caption').value=c.text;onCaption();
+  (c.hashtags||[]).forEach(t=>{if(!hashtags.includes(t))hashtags.push(t);});renderChips('hashtag');
+  toast('Popis aplikovaný','ok');
 }
 
-function updateMediaPreviewFromUrl() {
-  const u = document.getElementById('media-url').value.trim();
-  uploadedUrl = u;
-  document.getElementById('url-preview').textContent = u ? '🔗 ' + u : '';
+async function publishNow(){
+  const url=document.getElementById('media-url').value.trim()||uploadedUrl;
+  if(!url){toast('Najprv nahraj médium alebo zadaj URL','err');return;}
+  const btn=document.getElementById('publish-btn');btn.disabled=true;btn.textContent='⏳ Publikujem…';
+  try{
+    const r=await fetch(API+'/api/pub/publish',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({type:pubType,media_url:url,caption:document.getElementById('caption').value,hashtags,mentions,music:document.getElementById('music-field')?.value||''})});
+    const d=await r.json();
+    if(d.ok){toast('✅ Príspevok zverejnený!','ok');resetForm();}else{toast('❌ '+(d.error||'Chyba'),'err');}
+  }catch(e){toast('Server offline','err');}
+  btn.disabled=false;btn.innerHTML='🚀 Publikovať teraz';
+}
+function resetForm(){clearMedia();document.getElementById('caption').value='';
+  const mf=document.getElementById('music-field');if(mf)mf.value='';hashtags=[];mentions=[];renderChips('hashtag');renderChips('mention');onCaption();}
+
+function toggleSchedRow(){const r=document.getElementById('sched-row');
+  const show=r.style.display==='none';r.style.display=show?'block':'none';
+  if(show){const d=new Date(Date.now()+86400000);d.setMinutes(0);document.getElementById('sched-dt').value=d.toISOString().slice(0,16);}}
+async function schedulePost(){
+  const url=document.getElementById('media-url').value.trim()||uploadedUrl;
+  if(!url){toast('Najprv nahraj médium','err');return;}
+  const dt=document.getElementById('sched-dt').value;if(!dt){toast('Zvoľ dátum','err');return;}
+  try{
+    const r=await fetch(API+'/api/schedule',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({type:pubType,media_url:url,caption:document.getElementById('caption').value,hashtags,mentions,music:document.getElementById('music-field')?.value||'',scheduled_at:new Date(dt).toISOString()})});
+    const d=await r.json();
+    if(d.ok){toast('📅 Naplánované!','ok');document.getElementById('sched-row').style.display='none';resetForm();loadSchedule();}
+    else toast('Chyba: '+d.error,'err');
+  }catch(e){toast('Server offline','err');}
 }
 
-// ── CHIPS ────────────────────────────────────────────────────────────────────
-function addChip(type) {
-  const inp = document.getElementById(type==='hashtag'?'ht-input':'mt-input');
-  let val = inp.value.trim().replace(/^[#@\s]+/, '');
-  if (!val) return;
-  if (type === 'hashtag') { hashtags.push(val); renderChips('hashtag'); }
-  else { mentions.push(val); renderChips('mention'); }
-  inp.value = '';
+// ── SCHEDULE ─────────────────────────────────────────
+async function loadSchedule(){
+  try{const r=await fetch(API+'/api/schedule');renderSchedule(await r.json());}
+  catch(e){document.getElementById('sched-list').innerHTML='<div class="empty"><div class="ei">⚠️</div><div class="et">Server offline</div></div>';}
 }
-
-function removeChip(type, idx) {
-  if (type === 'hashtag') hashtags.splice(idx, 1);
-  else mentions.splice(idx, 1);
-  renderChips(type);
-}
-
-function renderChips(type) {
-  const arr = type === 'hashtag' ? hashtags : mentions;
-  const id  = type === 'hashtag' ? 'hashtag-chips' : 'mention-chips';
-  const pfx = type === 'hashtag' ? '#' : '@';
-  document.getElementById(id).innerHTML = arr.map((v,i) =>
-    `<div class="chip">${pfx}${v}<button class="rm" onclick="removeChip('${type}',${i})">✕</button></div>`
-  ).join('');
-}
-
-// ── CHAR COUNT ───────────────────────────────────────────────────────────────
-function updateCharCount() {
-  const n = document.getElementById('caption').value.length;
-  document.getElementById('cap-cc').textContent = n + ' / 2200';
-  document.getElementById('cap-cc').style.color = n > 2000 ? 'var(--pk)' : '';
-}
-
-// ── AI CAPTION ───────────────────────────────────────────────────────────────
-function toggleAI() {
-  document.getElementById('ai-panel').classList.toggle('open');
-}
-
-async function genCaption() {
-  const res = document.getElementById('ai-results');
-  res.innerHTML = '<div class="ai-loading">✨ Generujem...</div>';
-  try {
-    const r = await fetch(API + '/api/caption', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        type:     pubType,
-        niche:    document.getElementById('ai-niche').value,
-        tone:     document.getElementById('ai-tone').value,
-        lang:     document.getElementById('ai-lang').value,
-        keywords: document.getElementById('ai-kw').value
-      })
-    });
-    const data = await r.json();
-    if (!data.ok) { res.innerHTML = '<div class="ai-loading" style="color:var(--pk)">Chyba: ' + data.error + '</div>'; return; }
-    const captions = data.result?.captions || [];
-    res.innerHTML = captions.map((c,i) => `
-      <div class="ai-result-item" onclick="applyCaption(${i})">
-        <div>${c.text}</div>
-        <div class="ai-tags">${(c.hashtags||[]).slice(0,8).map(t=>`<span class="ai-tag">#${t}</span>`).join('')}</div>
-      </div>
-    `).join('');
-    res._data = captions;
-  } catch(e) {
-    res.innerHTML = '<div class="ai-loading" style="color:var(--pk)">Server offline</div>';
-  }
-}
-
-function applyCaption(i) {
-  const res = document.getElementById('ai-results');
-  const c = (res._data || [])[i];
-  if (!c) return;
-  document.getElementById('caption').value = c.text;
-  updateCharCount();
-  const tags = c.hashtags || [];
-  tags.forEach(t => { if (!hashtags.includes(t)) hashtags.push(t); });
-  renderChips('hashtag');
-  toast('Popis aplikovaný', 'ok');
-}
-
-// ── PUBLISH ───────────────────────────────────────────────────────────────────
-async function publishNow() {
-  const url = document.getElementById('media-url').value.trim() || uploadedUrl;
-  if (!url) { toast('Najprv nahraj médium alebo zadaj URL', 'err'); return; }
-  const caption = document.getElementById('caption').value;
-  try {
-    const r = await fetch(API + '/api/pub/publish', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ type: pubType, media_url: url, caption, hashtags, mentions,
-                             music: document.getElementById('music-field')?.value || '' })
-    });
-    const data = await r.json();
-    if (data.ok) { toast('✅ Príspevok zverejnený!', 'ok'); resetPubForm(); }
-    else { toast('❌ ' + (data.error || 'Chyba'), 'err'); }
-  } catch(e) { toast('Server offline', 'err'); }
-}
-
-function resetPubForm() {
-  clearMedia();
-  document.getElementById('caption').value = '';
-  document.getElementById('music-field') && (document.getElementById('music-field').value = '');
-  hashtags = []; mentions = [];
-  renderChips('hashtag'); renderChips('mention');
-  updateCharCount();
-}
-
-// ── SCHEDULER ─────────────────────────────────────────────────────────────────
-function openScheduleModal() {
-  const card = document.getElementById('schedule-card');
-  card.style.display = 'block';
-  // Set default = now + 1 day
-  const d = new Date(Date.now() + 86400000);
-  d.setMinutes(0);
-  document.getElementById('sched-dt').value = d.toISOString().slice(0,16);
-}
-function closeScheduleModal() { document.getElementById('schedule-card').style.display = 'none'; }
-
-async function schedulePost() {
-  const url = document.getElementById('media-url').value.trim() || uploadedUrl;
-  if (!url) { toast('Najprv nahraj médium', 'err'); return; }
-  const dt = document.getElementById('sched-dt').value;
-  if (!dt)  { toast('Zvol dátum', 'err'); return; }
-  const caption = document.getElementById('caption').value;
-  try {
-    const r = await fetch(API + '/api/schedule', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ type: pubType, media_url: url, caption, hashtags, mentions,
-                             music: document.getElementById('music-field')?.value || '',
-                             scheduled_at: new Date(dt).toISOString() })
-    });
-    const data = await r.json();
-    if (data.ok) { toast('📅 Naplánované!', 'ok'); closeScheduleModal(); resetPubForm(); loadSchedule(); }
-    else { toast('Chyba: ' + data.error, 'err'); }
-  } catch(e) { toast('Server offline', 'err'); }
-}
-
-async function loadSchedule() {
-  try {
-    const r = await fetch(API + '/api/schedule');
-    const items = await r.json();
-    renderSchedule(items);
-  } catch(e) {
-    document.getElementById('sched-list').innerHTML = '<div class="empty-state"><div class="ei">⚠️</div><div class="et">Server offline</div></div>';
-  }
-}
-
-function renderSchedule(items) {
-  const el = document.getElementById('sched-list');
-  if (!items.length) {
-    el.innerHTML = '<div class="empty-state"><div class="ei">📭</div><div class="et">Žiadne naplánované príspevky</div></div>';
-    return;
-  }
-  const icons = {post:'📸',reel:'🎬',story:'⚡'};
-  el.innerHTML = [...items].reverse().map(p => {
-    const dt = new Date(p.scheduled_at).toLocaleString('sk-SK',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-    const isImg = p.media_url && !p.media_url.match(/\.(mp4|mov)/i);
-    const thumb = isImg ? `<img src="${p.media_url}" class="sched-thumb" onerror="this.textContent='${icons[p.type]||'📎'}';this.style.fontSize='20px'">` 
-                        : `<div class="sched-thumb">${icons[p.type]||'📎'}</div>`;
-    return `<div class="sched-item">
-      ${thumb}
-      <div class="sched-info">
-        <div class="sched-type ${p.type}">${(p.type||'').toUpperCase()}</div>
-        <div class="sched-caption">${p.caption || '(bez popisu)'}</div>
-        <div class="sched-time">📅 ${dt}</div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
-        <span class="sched-status ${p.status}">${p.status}</span>
-        ${p.status==='pending' ? `<button class="sched-del" onclick="deleteScheduled('${p.id}')">🗑</button>` : ''}
-      </div>
-    </div>`;
+function renderSchedule(items){
+  document.getElementById('nb-sched').textContent=items.filter(p=>p.status==='pending').length;
+  document.getElementById('ov-sched').textContent=items.filter(p=>p.status==='pending').length;
+  const el=document.getElementById('sched-list');
+  if(!items.length){el.innerHTML='<div class="empty"><div class="ei">📭</div><div class="et">Žiadne naplánované príspevky</div></div>';return;}
+  const ic={post:'📸',reel:'🎬',story:'⚡'};
+  el.innerHTML=[...items].reverse().map(p=>{
+    const dt=new Date(p.scheduled_at).toLocaleString('sk-SK',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const isImg=p.media_url&&!/\.(mp4|mov)/i.test(p.media_url);
+    const thumb=isImg?`<img src="${p.media_url}" class="sched-thumb" onerror="this.outerHTML='<div class=&quot;sched-thumb&quot;>${ic[p.type]||'📎'}</div>'">`:`<div class="sched-thumb">${ic[p.type]||'📎'}</div>`;
+    return `<div class="sched-item">${thumb}<div class="sched-info"><div class="sched-type ${p.type}">${(p.type||'').toUpperCase()}</div><div class="sched-caption">${p.caption||'(bez popisu)'}</div><div class="sched-time">📅 ${dt}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:9px"><span class="sched-status ${p.status}">${p.status}</span>${p.status==='pending'?`<button class="sched-del" onclick="deleteScheduled('${p.id}')">🗑</button>`:''}</div></div>`;
   }).join('');
 }
+async function deleteScheduled(id){try{await fetch(API+'/api/schedule/'+id,{method:'DELETE'});loadSchedule();}catch(e){}}
 
-async function deleteScheduled(id) {
-  try {
-    await fetch(API + '/api/schedule/' + id, {method:'DELETE'});
-    loadSchedule();
-  } catch(e) {}
+// ── BOT ──────────────────────────────────────────────
+function v(k,val){document.getElementById('v-'+k).textContent=val;}
+function setBotMode(m){botMode=m;
+  ['smart_feed','viral_accounts','hashtags'].forEach(x=>document.getElementById('bm-'+x).classList.toggle('active',x===m));
+  document.getElementById('viral-section').style.display=(m==='viral_accounts')?'block':'none';
+  document.getElementById('hash-section').style.display=(m==='hashtags')?'block':'none';
+}
+function addBotChip(type){const inp=document.getElementById(type+'-input');let val=inp.value.trim().replace(/^[@#\s]+/,'');if(!val)return;
+  (type==='viral'?botViral:botHashtags).push(val);inp.value='';renderBotChips();}
+function removeBotChip(type,i){(type==='viral'?botViral:botHashtags).splice(i,1);renderBotChips();}
+function renderBotChips(){
+  document.getElementById('viral-chips').innerHTML=botViral.map((v,i)=>`<div class="chip mt">@${v}<button class="rm" onclick="removeBotChip('viral',${i})">✕</button></div>`).join('');
+  document.getElementById('hash-chips').innerHTML=botHashtags.map((v,i)=>`<div class="chip">#${v}<button class="rm" onclick="removeBotChip('hash',${i})">✕</button></div>`).join('');
+}
+function addComment(){const inp=document.getElementById('cmt-input');const val=inp.value.trim();if(!val)return;comments.push(val);inp.value='';renderComments();}
+function removeComment(i){comments.splice(i,1);renderComments();}
+function renderComments(){document.getElementById('cmt-list').innerHTML=comments.map((c,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13.5px"><span>${c}</span><button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px" onclick="removeComment(${i})">✕</button></div>`).join('');}
+async function toggleBot(){if(!online||!sys.selenium_available)return;
+  try{await fetch(API+(running?'/api/stop':'/api/start'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(running?{}:{config:buildBotConfig()})});}catch(e){}}
+function buildBotConfig(){return{mode:botMode,hashtags:botHashtags,viral_accounts:botViral,
+  comments_list:comments.length?comments:cfg.comments_list||[],
+  like_enabled:document.getElementById('t-like').checked,comment_enabled:document.getElementById('t-cmt').checked,
+  story_view_prob:document.getElementById('t-stories').checked?0.35:0,
+  pause_min:+document.getElementById('s-pmin').value,pause_max:+document.getElementById('s-pmax').value,
+  round_pause:+document.getElementById('s-rp').value,max_daily_actions:+document.getElementById('s-max').value,
+  feed_mode_enabled:botMode==='smart_feed'};}
+async function saveConfig(){try{await fetch(API+'/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(buildBotConfig())});toast('Uložené','ok');}catch(e){toast('Server offline','err');}}
+async function clearSeen(){if(!confirm('Vymazať históriu videných postov?'))return;try{await fetch(API+'/api/clear_seen',{method:'POST'});toast('História vymazaná','ok');}catch(e){}}
+async function loadBotConfig(){try{const r=await fetch(API+'/api/config');cfg=await r.json();
+  botMode=cfg.mode||'smart_feed';botHashtags=cfg.hashtags||[];botViral=cfg.viral_accounts||[];comments=cfg.comments_list||[];
+  setBotMode(botMode);renderBotChips();renderComments();
+  document.getElementById('t-like').checked=cfg.like_enabled!==false;
+  document.getElementById('t-cmt').checked=cfg.comment_enabled!==false;
+  document.getElementById('t-stories').checked=(cfg.story_view_prob||0)>0;
+  const set=(id,val,suf='')=>{document.getElementById('s-'+id).value=val;document.getElementById('v-'+id).textContent=val+suf;};
+  set('pmin',cfg.pause_min||9,'s');set('pmax',cfg.pause_max||30,'s');set('rp',cfg.round_pause||100,'s');set('max',cfg.max_daily_actions||150,'');
+}catch(e){}}
+
+// ── SETTINGS / VERIFY ────────────────────────────────
+async function loadPubConfig(){try{const r=await fetch(API+'/api/pub/config');const d=await r.json();
+  document.getElementById('cfg-uid').value=d.ig_user_id||'';
+  document.getElementById('cfg-token').value=d.has_token?'••••••••••':'';
+  document.getElementById('cfg-puburl').value=d.server_public_url||'';_tokChanged=false;}catch(e){}}
+async function savePubConfig(){
+  const uid=document.getElementById('cfg-uid').value.trim();
+  const token=document.getElementById('cfg-token').value.trim();
+  const puburl=document.getElementById('cfg-puburl').value.trim();
+  if(!uid){toast('Zadaj IG Business User ID','err');return;}
+  const payload={ig_user_id:uid,server_public_url:puburl};
+  if(_tokChanged&&!token.startsWith('•'))payload.access_token=token;
+  try{const r=await fetch(API+'/api/pub/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d=await r.json();if(d.ok){toast('Uložené','ok');_tokChanged=false;loadMe();}else toast(d.error||'Chyba','err');}
+  catch(e){toast('Server offline','err');}
+}
+async function verifyAccount(){
+  const res=document.getElementById('verify-result');res.innerHTML='🔄 Overujem…';res.style.color='var(--muted)';
+  try{
+    if(_tokChanged) await savePubConfig();
+    const r=await fetch(API+'/api/pub/verify');const d=await r.json();
+    if(d.ok){res.innerHTML=`<span class="gr">✅ @${d.username} — ${(d.followers||0).toLocaleString('sk-SK')} followerov</span>`;loadMe();}
+    else res.innerHTML=`<span style="color:var(--rd)">❌ ${d.error}</span>`;
+  }catch(e){res.innerHTML='<span style="color:var(--or)">⚠️ Server offline</span>';}
 }
 
-// ── BOT LOGIC ─────────────────────────────────────────────────────────────────
-function setBotMode(m) {
-  botMode = m;
-  ['smart','viral','hash'].forEach(x => document.getElementById('bm-'+x).classList.toggle('active', 
-    (x==='smart'&&m==='smart_feed')||(x==='viral'&&m==='viral_accounts')||(x==='hash'&&m==='hashtags')));
-  document.getElementById('viral-section').style.display = (m==='viral_accounts') ? 'block' : 'none';
-  document.getElementById('hash-section').style.display  = (m==='hashtags') ? 'block' : 'none';
-}
-
-function addBotChip(type) {
-  const inp = document.getElementById(type+'-input');
-  let val = inp.value.trim().replace(/^[@#\s]+/,'');
-  if (!val) return;
-  if (type === 'viral') botViralAccounts.push(val);
-  else botHashtags.push(val);
-  inp.value = '';
-  renderBotChips();
-}
-
-function removeBotChip(type, i) {
-  if (type === 'viral') botViralAccounts.splice(i,1);
-  else botHashtags.splice(i,1);
-  renderBotChips();
-}
-
-function renderBotChips() {
-  document.getElementById('viral-chips').innerHTML = botViralAccounts.map((v,i) =>
-    `<div class="chip">@${v}<button class="rm" onclick="removeBotChip('viral',${i})">✕</button></div>`).join('');
-  document.getElementById('hash-chips').innerHTML = botHashtags.map((v,i) =>
-    `<div class="chip">#${v}<button class="rm" onclick="removeBotChip('hash',${i})">✕</button></div>`).join('');
-}
-
-function addComment() {
-  const inp = document.getElementById('cmt-input');
-  const val = inp.value.trim();
-  if (!val) return;
-  comments.push(val);
-  inp.value = '';
-  renderComments();
-}
-function removeComment(i) { comments.splice(i,1); renderComments(); }
-function renderComments() {
-  document.getElementById('cmt-list').innerHTML = comments.map((c,i) =>
-    `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px">
-      <span>${c}</span>
-      <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px" onclick="removeComment(${i})">✕</button>
-    </div>`
-  ).join('');
-}
-
-async function toggleBot() {
-  if (!online) return;
-  const endpoint = running ? '/api/stop' : '/api/start';
-  const payload  = running ? {} : { config: buildBotConfig() };
-  try {
-    await fetch(API + endpoint, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
-  } catch(e) {}
-}
-
-function buildBotConfig() {
-  return {
-    mode:            botMode,
-    hashtags:        botHashtags,
-    viral_accounts:  botViralAccounts,
-    comments_list:   comments.length ? comments : cfg.comments_list || [],
-    like_enabled:    document.getElementById('t-like').checked,
-    comment_enabled: document.getElementById('t-cmt').checked,
-    story_view_prob: document.getElementById('t-stories').checked ? 0.35 : 0,
-    pause_min:   parseInt(document.getElementById('s-pmin')?.value||9),
-    pause_max:   parseInt(document.getElementById('s-pmax')?.value||30),
-    round_pause: parseInt(document.getElementById('s-rp')?.value||100),
-    max_daily_actions: parseInt(document.getElementById('s-max')?.value||150),
-    feed_mode_enabled: (botMode === 'smart_feed')
-  };
-}
-
-async function saveConfig() {
-  try {
-    await fetch(API + '/api/config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(buildBotConfig())});
-    toast('Uložené', 'ok');
-  } catch(e) { toast('Server offline', 'err'); }
-}
-
-async function clearSeen() {
-  if (!confirm('Vymazať históriu videných postov?')) return;
-  try {
-    await fetch(API + '/api/clear_seen', {method:'POST'});
-    toast('História vymazaná', 'ok');
-  } catch(e) {}
-}
-
-// ── SETTINGS ─────────────────────────────────────────────────────────────────
-function openSettings() {
-  document.getElementById('overlay').classList.add('open');
-  document.getElementById('settings-sheet').classList.add('open');
-  loadPubConfig();
-}
-function closeSettings() {
-  document.getElementById('overlay').classList.remove('open');
-  document.getElementById('settings-sheet').classList.remove('open');
-}
-
-async function loadPubConfig() {
-  try {
-    const r = await fetch(API + '/api/pub/config');
-    const d = await r.json();
-    document.getElementById('cfg-token').value  = d.has_token ? '••••••••' : '';
-    document.getElementById('cfg-uid').value    = d.ig_user_id || '';
-    document.getElementById('cfg-puburl').value = d.server_public_url || '';
-  } catch(e) {}
-}
-
-let _tokenChanged = false;
-function pubConfigChanged() { _tokenChanged = true; }
-
-async function savePubConfig() {
-  const token  = document.getElementById('cfg-token').value.trim();
-  const uid    = document.getElementById('cfg-uid').value.trim();
-  const puburl = document.getElementById('cfg-puburl').value.trim();
-  const res    = document.getElementById('verify-result');
-
-  if (!uid) { toast('Zadaj IG User ID', 'err'); return; }
-  const payload = { ig_user_id: uid, server_public_url: puburl };
-  if (_tokenChanged && !token.startsWith('•')) payload.access_token = token;
-
-  res.textContent = '🔄 Overujem...';
-  try {
-    await fetch(API + '/api/pub/config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
-    const vr = await fetch(API + '/api/pub/verify');
-    const vd = await vr.json();
-    if (vd.ok) {
-      res.innerHTML = `<span style="color:var(--gr)">✅ @${vd.username} — ${(vd.followers||0).toLocaleString()} followerov</span>`;
-      _tokenChanged = false;
-    } else {
-      res.innerHTML = `<span style="color:var(--pk)">❌ ${vd.error}</span>`;
+// ── POLL ─────────────────────────────────────────────
+async function poll(){
+  try{
+    const r=await fetch(API+'/api/status');const st=await r.json();sys=st;
+    if(!online){online=true;
+      document.getElementById('dot').className='dot on';
+      document.getElementById('srv-label').textContent='Online';
+      loadBotConfig();renderHealth();
+      document.getElementById('bot-selenium-warn').style.display=st.selenium_available?'none':'block';
     }
-  } catch(e) { res.innerHTML = '<span style="color:var(--or)">⚠️ Server offline</span>'; }
-}
-
-// ── POLL ─────────────────────────────────────────────────────────────────────
-async function poll() {
-  try {
-    const r  = await fetch(API + '/api/status');
-    const st = await r.json();
-
-    if (!online) {
-      online = true;
-      document.getElementById('dot').className = 'dot on';
-      document.getElementById('srv-label').textContent = 'Online';
-      document.getElementById('bot-cta').className = 'bot-cta start';
-      loadBotConfig();
-    }
-
-    running = st.running;
-    document.getElementById('bot-cta').textContent = running ? '⏹ Zastaviť bota' : '▶ Spustiť bota';
-    document.getElementById('bot-cta').className   = running ? 'bot-cta stop' : 'bot-cta start';
-
-    const banner = document.getElementById('bot-banner');
-    banner.className = 'bot-banner' + (running ? ' run' : st.blocked ? ' blk' : '');
-    document.getElementById('bb-label').textContent = running ? 'Bot beží' : st.blocked ? 'Blokovaný' : 'Neaktívny';
-
-    const tag = st.current_tag || st.current_account;
-    document.getElementById('bb-meta').textContent = running ? (tag ? `#${tag}` : 'Smart feed...') : '';
-    document.getElementById('bb-tag').textContent  = '';
-
-    document.getElementById('s-likes').textContent   = st.likes   || 0;
-    document.getElementById('s-likes-t').textContent = st.likes_total || 0;
-    document.getElementById('s-cmt').textContent     = st.comments || 0;
-    document.getElementById('s-cmt-t').textContent   = st.comments_total || 0;
-    document.getElementById('s-posts').textContent   = st.posts   || 0;
-
-    const el = st.elapsed || 0;
-    const h = Math.floor(el/3600), m = Math.floor((el%3600)/60), s = el%60;
-    document.getElementById('s-time').textContent = h>0 ? `${h}h ${m}m` : m>0 ? `${m}m ${s}s` : el>0 ? `${s}s` : '—';
-
-    // Log
-    const logEl = document.getElementById('log');
-    if (st.log && st.log.length) {
-      logEl.innerHTML = st.log.slice(0,40).map(e =>
-        `<div class="log-entry"><span class="log-time">${e.time}</span><span class="log-msg ${e.level||'info'}">${e.msg}</span></div>`
-      ).join('');
-    }
-
-  } catch(e) {
-    if (online) {
-      online = false;
-      document.getElementById('dot').className = 'dot err';
-      document.getElementById('srv-label').textContent = 'Offline';
-      document.getElementById('bot-cta').textContent = '⏳ Offline...';
-      document.getElementById('bot-cta').className = 'bot-cta dis';
-    }
+    running=st.running;
+    const cta=document.getElementById('cta-bot');
+    if(!st.selenium_available){cta.className='cta-bot dis';cta.textContent='🔌 Len lokálne';}
+    else{cta.textContent=running?'⏹ Zastaviť':'▶ Spustiť';cta.className=running?'cta-bot stop':'cta-bot start';}
+    const banner=document.getElementById('bot-banner');
+    banner.className='bot-banner'+(running?' run':st.blocked?' blk':'');
+    document.getElementById('bb-label').textContent=running?'Bot beží':st.blocked?'Blokovaný':'Neaktívny';
+    const tag=st.current_tag||st.current_account;
+    document.getElementById('bb-meta').textContent=running?(tag?'#'+tag:'Smart feed…'):'Stlač štart';
+    // stats (bot page + overview)
+    const el=st.elapsed||0,h=Math.floor(el/3600),m=Math.floor((el%3600)/60),s=el%60;
+    const tstr=h>0?`${h}h ${m}m`:m>0?`${m}m ${s}s`:el>0?`${s}s`:'—';
+    document.getElementById('b-likes').textContent=st.likes||0;
+    document.getElementById('b-likes-t').textContent=st.likes_total||0;
+    document.getElementById('b-cmt').textContent=st.comments||0;
+    document.getElementById('b-cmt-t').textContent=st.comments_total||0;
+    document.getElementById('b-posts').textContent=st.posts||0;
+    document.getElementById('b-time').textContent=tstr;
+    document.getElementById('ov-likes').textContent=(st.likes_total||0).toLocaleString('sk-SK');
+    document.getElementById('ov-cmt').textContent=(st.comments_total||0).toLocaleString('sk-SK');
+    document.getElementById('ov-likes-s').textContent='táto relácia: '+(st.likes||0);
+    document.getElementById('ov-cmt-s').textContent='táto relácia: '+(st.comments||0);
+    document.getElementById('ov-posts').textContent=st.posts||0;
+    document.getElementById('ov-time').textContent=tstr;
+    document.getElementById('ov-running').textContent=running?'beží':'neaktívny';
+    document.getElementById('ov-actions').textContent=((st.likes_total||0)+(st.comments_total||0)).toLocaleString('sk-SK');
+    const logEl=document.getElementById('log');
+    if(st.log&&st.log.length)logEl.innerHTML=st.log.slice(0,50).map(e=>`<div class="log-entry"><span class="log-time">${e.time}</span><span class="log-msg ${e.level||'info'}">${e.msg}</span></div>`).join('');
+  }catch(e){
+    if(online){online=false;document.getElementById('dot').className='dot err';document.getElementById('srv-label').textContent='Offline';}
   }
 }
 
-async function loadBotConfig() {
-  try {
-    const r = await fetch(API + '/api/config');
-    cfg = await r.json();
-    botMode = cfg.mode || 'smart_feed';
-    botHashtags        = cfg.hashtags       || [];
-    botViralAccounts   = cfg.viral_accounts || [];
-    comments           = cfg.comments_list  || [];
-
-    setBotMode(botMode);
-    renderBotChips();
-    renderComments();
-
-    document.getElementById('t-like').checked    = cfg.like_enabled !== false;
-    document.getElementById('t-cmt').checked     = cfg.comment_enabled !== false;
-    document.getElementById('t-stories').checked = (cfg.story_view_prob || 0) > 0;
-
-    if (document.getElementById('s-pmin')) {
-      document.getElementById('s-pmin').value = cfg.pause_min || 9;
-      document.getElementById('s-pmax').value = cfg.pause_max || 30;
-      document.getElementById('s-rp').value   = cfg.round_pause || 100;
-      document.getElementById('s-max').value  = cfg.max_daily_actions || 150;
-      document.getElementById('v-pmin').textContent = (cfg.pause_min||9) + 's';
-      document.getElementById('v-pmax').textContent = (cfg.pause_max||30) + 's';
-      document.getElementById('v-rp').textContent   = (cfg.round_pause||100) + 's';
-      document.getElementById('v-max').textContent  = cfg.max_daily_actions || 150;
-    }
-  } catch(e) {}
-}
-
-// ── TOAST ─────────────────────────────────────────────────────────────────────
-function toast(msg, type='ok') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className   = `toast ${type} show`;
-  setTimeout(() => t.classList.remove('show'), 2800);
-}
-
-// ── INIT ──────────────────────────────────────────────────────────────────────
-setPubType('post');
-setBotMode('smart_feed');
-showTab('pub');
-poll();
-setInterval(poll, 2000);
+// ── INIT ─────────────────────────────────────────────
+buildNav();renderPresets();renderMusic();setPubType('post');setBotMode('smart_feed');
+loadMe();poll();setInterval(poll,2000);
 </script>
 </body>
 </html>

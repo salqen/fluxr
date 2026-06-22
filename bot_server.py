@@ -9,6 +9,13 @@ from flask import Flask, jsonify, request, send_from_directory, redirect, sessio
 from flask_cors import CORS
 import threading, time, random, os, json, sys, uuid, secrets
 from datetime import datetime
+
+# UTF-8 výstup (Windows konzola inak padne na emoji v logoch)
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except Exception:
+    pass
 from werkzeug.utils import secure_filename
 import requests as req_lib
 
@@ -55,8 +62,8 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 if not os.environ.get("SECRET_KEY"):
-    print("⚠️  SECRET_KEY nie je nastavený v ENV — sessions sa zrušia pri reštarte. "
-          "Nastav stabilný SECRET_KEY v Railway premenných.")
+    print("[WARN] SECRET_KEY nie je nastaveny v ENV - sessions sa zrusia pri restarte. "
+          "Nastav stabilny SECRET_KEY v Railway premennych.")
 
 # ── SÚBORY & PRIEČINKY ────────────────────────────────────────────────────────
 # Na Railway /tmp pretrváva počas behu, resetuje sa pri redeploy
@@ -103,15 +110,21 @@ def get_current_user() -> dict | None:
         return None
     return load_users().get(uid)
 
-def save_user(ig_user_id: str, username: str, token: str, avatar: str = ""):
+def save_user(ig_user_id: str, username: str, token: str, avatar: str = "",
+              followers: int = 0, ig_business: bool = False, **extra):
     users = load_users()
-    users[ig_user_id] = {
+    rec = users.get(ig_user_id, {})
+    rec.update({
         "ig_user_id":   ig_user_id,
         "username":     username,
         "token":        token,
         "avatar":       avatar,
-        "connected_at": datetime.now().isoformat()
-    }
+        "followers":    followers,
+        "ig_business":  ig_business,
+        "connected_at": rec.get("connected_at") or datetime.now().isoformat()
+    })
+    rec.update(extra)
+    users[ig_user_id] = rec
     save_users(users)
     if PUBLISHER_AVAILABLE and ig_user_id not in schedulers:
         pub = IGPublisher(token, ig_user_id)
@@ -442,42 +455,52 @@ def auth_callback():
     long_token = r2.get("access_token", short_token)
 
     ig_user_id, ig_username, ig_avatar = None, None, ""
+    ig_followers, ig_business = 0, False
+    page_token = long_token
     try:
         pages = req_lib.get("https://graph.facebook.com/v19.0/me/accounts", params={
             "access_token": long_token
         }).json().get("data", [])
 
         for page in pages:
+            pg_tok = page.get("access_token", long_token)
             ig_data = req_lib.get(f"https://graph.facebook.com/v19.0/{page['id']}", params={
                 "fields":       "instagram_business_account",
-                "access_token": page.get("access_token", long_token)
+                "access_token": pg_tok
             }).json()
             ig_id = ig_data.get("instagram_business_account", {}).get("id")
             if ig_id:
                 profile = req_lib.get(f"https://graph.facebook.com/v19.0/{ig_id}", params={
                     "fields":       "username,profile_picture_url,followers_count",
-                    "access_token": long_token
+                    "access_token": pg_tok
                 }).json()
-                ig_user_id = ig_id
-                ig_username = profile.get("username", "")
-                ig_avatar   = profile.get("profile_picture_url", "")
+                ig_user_id   = ig_id
+                ig_username  = profile.get("username", "")
+                ig_avatar    = profile.get("profile_picture_url", "")
+                ig_followers = profile.get("followers_count", 0)
+                ig_business  = True
+                page_token   = pg_tok   # token pre publikovanie musí byť PAGE token
                 break
     except Exception as e:
         add_log(f"⚠️ IG account lookup: {e}", "warn")
 
+    # Žiadny IG Business účet → publikovanie nebude fungovať, ale prihlásime používateľa
     if not ig_user_id:
         me = req_lib.get("https://graph.facebook.com/v19.0/me", params={
             "fields": "id,name", "access_token": long_token
         }).json()
         ig_user_id  = me.get("id", str(uuid.uuid4())[:8])
         ig_username = me.get("name", "user")
+        ig_business = False
+        add_log("⚠️ Nenašiel sa prepojený Instagram Business účet — publikovanie bude vypnuté.", "warn")
 
-    save_user(ig_user_id, ig_username, long_token, ig_avatar)
+    save_user(ig_user_id, ig_username, page_token, ig_avatar,
+              followers=ig_followers, ig_business=ig_business)
     session["ig_user_id"] = ig_user_id
     session["ig_username"] = ig_username
     session["ig_avatar"]   = ig_avatar
 
-    add_log(f"✅ Prihlásený: @{ig_username}", "ok")
+    add_log(f"✅ Prihlásený: @{ig_username}" + ("" if ig_business else " (bez IG Business)"), "ok")
     return redirect("/dashboard")
 
 @app.route("/auth/logout")
@@ -509,11 +532,16 @@ def api_me():
     if not user:
         return jsonify({"logged_in": False})
     return jsonify({
-        "logged_in":  True,
-        "username":   user.get("username"),
-        "avatar":     user.get("avatar", ""),
-        "ig_user_id": user.get("ig_user_id"),
-        "has_token":  bool(user.get("token"))
+        "logged_in":    True,
+        "username":     user.get("username"),
+        "avatar":       user.get("avatar", ""),
+        "ig_user_id":   user.get("ig_user_id"),
+        "has_token":    bool(user.get("token")),
+        "followers":    user.get("followers", 0),
+        "ig_business":  user.get("ig_business", False),
+        "connected_at": user.get("connected_at", ""),
+        "publisher_ready": PUBLISHER_AVAILABLE,
+        "ai_ready":     bool(ANTHROPIC_KEY)
     })
 
 # ── API — BOT ─────────────────────────────────────────────────────────────────
@@ -596,6 +624,10 @@ def pub_set_config():
     if "server_public_url" in data:
         rec["server_public_url"] = data["server_public_url"]
 
+    # Manuálne zadaný token + IG Business ID → povolíme publikovanie
+    if rec.get("token") and rec.get("ig_user_id"):
+        rec["ig_business"] = True
+
     users[uid] = rec
     save_users(users)
 
@@ -642,6 +674,11 @@ def pub_publish_now():
         return jsonify({"ok": False, "error": "Nie si prihlásený alebo chýba token"})
     if not PUBLISHER_AVAILABLE:
         return jsonify({"ok": False, "error": "ig_publisher.py chýba"})
+    if not user.get("ig_business", False):
+        return jsonify({"ok": False, "error": (
+            "Tvoj účet nie je prepojený Instagram Business/Creator účet. "
+            "Prepni IG na Business/Creator profil, prepoj ho s Facebook stránkou a prihlás sa znova. "
+            "Alebo zadaj IG Business ID + token ručne v Nastaveniach.")})
 
     data     = request.get_json()
     ptype    = data.get("type", "post")
@@ -724,6 +761,8 @@ def gen_caption():
     keywords = data.get("keywords", "")
     lang     = data.get("lang", "en")
     tone     = data.get("tone", "engaging")
+    if not ANTHROPIC_KEY:
+        return jsonify({"ok": False, "error": "AI nie je nakonfigurované — chýba ANTHROPIC_API_KEY v premenných servera."})
     prompt = (
         f"You are a professional Instagram content creator. "
         f"Generate 3 different {tone} captions for an Instagram {ptype} "

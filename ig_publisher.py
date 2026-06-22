@@ -138,10 +138,15 @@ class IGPublisher:
 
     # ── TOKEN CHECK ──────────────────────────────────────────────────────────
     def verify_token(self) -> dict:
-        data = self._get(self.user_id, {"fields": "id,name,username,followers_count"})
+        data = self._get(self.user_id, {"fields": "id,name,username,followers_count,profile_picture_url"})
         if "error" in data:
             return {"ok": False, "error": data["error"].get("message")}
-        return {"ok": True, "username": data.get("username"), "followers": data.get("followers_count")}
+        return {
+            "ok": True,
+            "username":  data.get("username"),
+            "followers": data.get("followers_count", 0),
+            "avatar":    data.get("profile_picture_url", ""),
+        }
 
 
 # ── SCHEDULER ────────────────────────────────────────────────────────────────
