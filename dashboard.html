@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>InstaBot v3.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ─────────────────────────────────────────────────────────── */
+:root {
+  --bg:      #0C0C14;
+  --s1:      #13131E;
+  --s2:      #1A1A28;
+  --s3:      #222235;
+  --border:  #252538;
+  --border2: #333352;
+  --pk:      #FF3CAB;
+  --pu:      #7B5CF0;
+  --gr:      #00E5A0;
+  --bl:      #4A9EFF;
+  --or:      #FF8C42;
+  --text:    #F0F0FA;
+  --sub:     #9090B0;
+  --muted:   #52526B;
+  --fd: 'Space Grotesk', sans-serif;
+  --fb: 'Inter', sans-serif;
+  --fm: 'DM Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: var(--fb); font-size: 14px; min-height: 100vh; overflow-x: hidden; }
+
+/* ── TOPBAR ──────────────────────────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(12,12,20,.9); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 16px; height: 52px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.logo { font-family: var(--fd); font-weight: 700; font-size: 18px; letter-spacing: -.3px; }
+.logo em { color: var(--pk); font-style: normal; }
+.logo span { font-size: 11px; color: var(--muted); margin-left: 6px; font-family: var(--fm); }
+.topright { display: flex; align-items: center; gap: 10px; }
+.srv { display: flex; align-items: center; gap: 5px; font-family: var(--fm); font-size: 11px; color: var(--muted); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); transition: all .3s; }
+.dot.on  { background: var(--gr); box-shadow: 0 0 8px var(--gr); animation: blink 2s infinite; }
+.dot.err { background: var(--pk); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+.settings-btn { background: var(--s2); border: 1px solid var(--border); color: var(--sub); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 15px; transition: all .2s; }
+.settings-btn:hover { border-color: var(--border2); color: var(--text); }
+
+/* ── MAIN TABS ───────────────────────────────────────────────────────── */
+.tabs-nav {
+  display: flex; gap: 2px; padding: 10px 12px 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--s1);
+}
+.tab-btn {
+  flex: 1; padding: 9px 8px; text-align: center; font-family: var(--fd); font-size: 13px; font-weight: 600;
+  color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; transition: all .2s;
+  letter-spacing: -.1px;
+}
+.tab-btn:hover { color: var(--sub); }
+.tab-btn.active { color: var(--text); border-bottom-color: var(--pk); }
+
+/* ── CONTENT ─────────────────────────────────────────────────────────── */
+.pane { display: none; padding: 14px 14px 100px; max-width: 500px; margin: 0 auto; }
+.pane.active { display: block; }
+
+/* ── CARDS ───────────────────────────────────────────────────────────── */
+.card { background: var(--s1); border: 1px solid var(--border); border-radius: 16px; margin-bottom: 12px; overflow: hidden; }
+.card-head { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-family: var(--fd); font-weight: 600; font-size: 14px; }
+.card-body { padding: 14px 16px; }
+.section-label { font-family: var(--fm); font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 10px; margin-top: 18px; }
+.section-label:first-child { margin-top: 0; }
+
+/* ── SUB-TABS ────────────────────────────────────────────────────────── */
+.sub-tabs { display: flex; gap: 6px; padding: 12px 14px; }
+.sub-tab { flex: 1; padding: 8px; text-align: center; font-family: var(--fd); font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 10px; color: var(--muted); cursor: pointer; transition: all .2s; background: transparent; }
+.sub-tab:hover { border-color: var(--border2); color: var(--sub); }
+.sub-tab.active { background: var(--s2); border-color: var(--pk); color: var(--pk); }
+
+/* ── DRAG DROP ZONE ──────────────────────────────────────────────────── */
+.dropzone {
+  border: 2px dashed var(--border2); border-radius: 14px; padding: 32px 20px;
+  text-align: center; cursor: pointer; transition: all .25s; position: relative;
+  background: var(--s2); margin-bottom: 12px;
+}
+.dropzone:hover, .dropzone.drag-over { border-color: var(--pk); background: rgba(255,60,171,.05); }
+.dropzone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.dropzone .dz-icon { font-size: 32px; margin-bottom: 8px; display: block; }
+.dropzone .dz-label { font-family: var(--fd); font-size: 14px; font-weight: 600; color: var(--sub); margin-bottom: 4px; }
+.dropzone .dz-sub { font-size: 12px; color: var(--muted); }
+.dz-preview { margin-bottom: 12px; border-radius: 14px; overflow: hidden; position: relative; max-height: 260px; }
+.dz-preview img, .dz-preview video { width: 100%; border-radius: 14px; object-fit: cover; max-height: 260px; display: block; }
+.dz-preview .dz-clear { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.7); border: none; color: #fff; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.dz-upload-progress { height: 3px; background: var(--s3); border-radius: 2px; margin-bottom: 10px; overflow: hidden; display: none; }
+.dz-upload-progress-bar { height: 100%; background: linear-gradient(90deg, var(--pk), var(--pu)); width: 0; transition: width .3s; }
+
+/* ── INPUTS ──────────────────────────────────────────────────────────── */
+.field-group { margin-bottom: 10px; }
+.field-label { font-size: 12px; font-weight: 500; color: var(--sub); margin-bottom: 6px; display: flex; justify-content: space-between; }
+.field-label .char-count { font-family: var(--fm); color: var(--muted); }
+textarea, input[type=text], input[type=datetime-local], input[type=url], select {
+  width: 100%; background: var(--s2); border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); font-family: var(--fb); font-size: 13.5px; padding: 10px 12px;
+  outline: none; resize: none; transition: border-color .2s;
+}
+textarea:focus, input:focus, select:focus { border-color: var(--pk); }
+textarea { min-height: 90px; line-height: 1.55; }
+select { cursor: pointer; }
+
+/* Tags / chips */
+.chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.chip {
+  display: flex; align-items: center; gap: 4px; padding: 4px 10px;
+  background: var(--s3); border: 1px solid var(--border2); border-radius: 100px;
+  font-size: 12px; font-family: var(--fm); color: var(--bl); cursor: default;
+}
+.chip .rm { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 13px; line-height: 1; padding: 0 0 0 2px; }
+.chip .rm:hover { color: var(--pk); }
+.chip-input-row { display: flex; gap: 6px; margin-top: 8px; }
+.chip-input-row input { border-radius: 10px; }
+.chip-add-btn { background: var(--s3); border: 1px solid var(--border2); color: var(--sub); border-radius: 10px; padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .2s; }
+.chip-add-btn:hover { border-color: var(--pk); color: var(--pk); }
+
+/* ── BUTTONS ─────────────────────────────────────────────────────────── */
+.btn { display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 10px; padding: 10px 16px; font-family: var(--fd); font-size: 13.5px; font-weight: 600; cursor: pointer; transition: all .2s; }
+.btn-primary { background: linear-gradient(135deg, var(--pk), #c030e0); color: #fff; box-shadow: 0 4px 20px rgba(255,60,171,.25); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(255,60,171,.35); }
+.btn-primary:active { transform: none; }
+.btn-secondary { background: var(--s3); border: 1px solid var(--border2); color: var(--sub); }
+.btn-secondary:hover { border-color: var(--pk); color: var(--pk); }
+.btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--muted); font-size: 12.5px; padding: 7px 12px; border-radius: 8px; }
+.btn-ghost:hover { border-color: var(--border2); color: var(--sub); }
+.btn-row { display: flex; gap: 8px; margin-top: 14px; }
+.btn-row .btn { flex: 1; justify-content: center; }
+.btn-danger { background: rgba(255,60,60,.1); border: 1px solid rgba(255,80,80,.3); color: #ff6060; }
+.btn-danger:hover { background: rgba(255,60,60,.18); }
+
+/* AI Panel */
+.ai-panel { background: rgba(123,92,240,.07); border: 1px solid rgba(123,92,240,.25); border-radius: 14px; padding: 14px; margin-bottom: 12px; display: none; }
+.ai-panel.open { display: block; }
+.ai-result-item { background: var(--s2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; margin-top: 8px; font-size: 13px; line-height: 1.6; cursor: pointer; transition: all .2s; }
+.ai-result-item:hover { border-color: var(--pu); }
+.ai-result-item .ai-tags { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+.ai-result-item .ai-tag { font-family: var(--fm); font-size: 11px; color: var(--pu); background: rgba(123,92,240,.1); padding: 2px 7px; border-radius: 4px; }
+.ai-loading { text-align: center; padding: 20px; color: var(--muted); font-size: 13px; }
+.music-suggestions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+.music-pill { background: var(--s3); border: 1px solid var(--border2); color: var(--or); font-size: 11.5px; font-family: var(--fm); padding: 4px 9px; border-radius: 6px; cursor: pointer; transition: all .2s; }
+.music-pill:hover { border-color: var(--or); }
+
+/* ── STATS GRID ──────────────────────────────────────────────────────── */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.stat-card { background: var(--s1); border: 1px solid var(--border); border-radius: 14px; padding: 14px 15px; }
+.stat-label { font-family: var(--fm); font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 4px; }
+.stat-val { font-family: var(--fd); font-size: 30px; font-weight: 700; line-height: 1; }
+.stat-val.pk { color: var(--pk); } .stat-val.gr { color: var(--gr); } .stat-val.bl { color: var(--bl); }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 3px; font-family: var(--fm); }
+.stat-wide { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
+
+/* ── TOGGLE ──────────────────────────────────────────────────────────── */
+.row-toggle { display: flex; align-items: center; justify-content: space-between; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.row-toggle:last-child { border-bottom: none; }
+.rt-info .rt-name { font-size: 14px; font-weight: 500; }
+.rt-info .rt-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.toggle-wrap { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle-wrap input { opacity: 0; width: 0; height: 0; }
+.toggle-track { position: absolute; inset: 0; background: var(--s3); border: 1.5px solid var(--border2); border-radius: 100px; cursor: pointer; transition: all .25s; }
+.toggle-thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; background: var(--muted); border-radius: 50%; transition: all .25s; pointer-events: none; }
+input:checked ~ .toggle-track { background: rgba(0,229,160,.1); border-color: var(--gr); }
+input:checked ~ .toggle-track .toggle-thumb { transform: translateX(20px); background: var(--gr); box-shadow: 0 0 10px rgba(0,229,160,.5); }
+
+/* ── BOT BANNER ──────────────────────────────────────────────────────── */
+.bot-banner { border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; border: 1px solid var(--border); background: var(--s1); transition: all .3s; }
+.bot-banner.run { background: rgba(0,229,160,.06); border-color: rgba(0,229,160,.35); }
+.bot-banner.blk { background: rgba(255,60,171,.06); border-color: rgba(255,60,171,.35); }
+.bb-left { display: flex; align-items: center; gap: 8px; }
+.bb-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); transition: all .3s; }
+.bot-banner.run .bb-dot { background: var(--gr); box-shadow: 0 0 8px var(--gr); animation: blink 1.5s infinite; }
+.bot-banner.blk .bb-dot { background: var(--pk); }
+.bb-label { font-family: var(--fd); font-size: 14px; font-weight: 600; }
+.bb-meta { font-size: 12px; color: var(--muted); font-family: var(--fm); }
+
+/* ── LOG ─────────────────────────────────────────────────────────────── */
+.log-wrap { background: var(--s1); border: 1px solid var(--border); border-radius: 14px; max-height: 240px; overflow-y: auto; }
+.log-entry { display: flex; gap: 8px; padding: 7px 13px; border-bottom: 1px solid var(--border); font-size: 11.5px; font-family: var(--fm); }
+.log-entry:last-child { border-bottom: none; }
+.log-time { color: var(--muted); flex-shrink: 0; }
+.log-msg.ok { color: var(--gr); } .log-msg.err { color: var(--pk); } .log-msg.warn { color: var(--or); } .log-msg.info { color: var(--sub); }
+.log-wrap::-webkit-scrollbar { width: 3px; }
+.log-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ── SCHEDULE LIST ───────────────────────────────────────────────────── */
+.sched-item { background: var(--s1); border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; }
+.sched-thumb { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; background: var(--s3); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid var(--border); }
+.sched-info { flex: 1; min-width: 0; }
+.sched-type { font-family: var(--fm); font-size: 10px; text-transform: uppercase; letter-spacing: .7px; margin-bottom: 3px; }
+.sched-type.post { color: var(--bl); } .sched-type.reel { color: var(--pk); } .sched-type.story { color: var(--pu); }
+.sched-caption { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; color: var(--text); }
+.sched-time { font-family: var(--fm); font-size: 11px; color: var(--muted); }
+.sched-status { font-family: var(--fm); font-size: 10px; padding: 2px 7px; border-radius: 4px; flex-shrink: 0; }
+.sched-status.pending   { background: rgba(74,158,255,.12); color: var(--bl); }
+.sched-status.published { background: rgba(0,229,160,.12); color: var(--gr); }
+.sched-status.failed    { background: rgba(255,60,171,.12); color: var(--pk); }
+.sched-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0; transition: color .2s; }
+.sched-del:hover { color: var(--pk); }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--muted); }
+.empty-state .ei { font-size: 36px; margin-bottom: 10px; }
+.empty-state .et { font-size: 14px; color: var(--sub); }
+
+/* ── MAIN CTA BUTTON (BOT) ───────────────────────────────────────────── */
+.bot-cta-wrap { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100; padding: 12px 14px 22px; background: linear-gradient(to top, var(--bg) 60%, transparent); }
+.bot-cta { width: 100%; max-width: 500px; margin: 0 auto; display: block; height: 56px; border-radius: 16px; border: none; font-family: var(--fd); font-size: 17px; font-weight: 700; cursor: pointer; transition: all .25s; letter-spacing: -.2px; }
+.bot-cta.start { background: linear-gradient(135deg, var(--pk), #c030e0); color: #fff; box-shadow: 0 8px 30px rgba(255,60,171,.3); }
+.bot-cta.start:hover { box-shadow: 0 10px 36px rgba(255,60,171,.45); }
+.bot-cta.stop  { background: var(--s2); border: 1.5px solid var(--pk); color: var(--pk); }
+.bot-cta.dis   { background: var(--s2); color: var(--muted); cursor: not-allowed; }
+
+/* ── SETTINGS OVERLAY ────────────────────────────────────────────────── */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 300; opacity: 0; pointer-events: none; transition: opacity .25s; }
+.overlay.open { opacity: 1; pointer-events: all; }
+.settings-sheet { position: fixed; bottom: 0; left: 0; right: 0; z-index: 400; background: var(--s1); border-radius: 20px 20px 0 0; border-top: 1px solid var(--border2); padding: 20px 16px 36px; transform: translateY(100%); transition: transform .3s cubic-bezier(.4,0,.2,1); max-height: 85vh; overflow-y: auto; }
+.settings-sheet.open { transform: translateY(0); }
+.sheet-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 2px; margin: 0 auto 18px; }
+.sheet-title { font-family: var(--fd); font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+
+/* ── RANGE SLIDER ────────────────────────────────────────────────────── */
+.slider-row { margin-bottom: 12px; }
+.slider-head { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.slider-name { font-size: 13px; color: var(--sub); }
+.slider-val  { font-family: var(--fm); font-size: 12px; color: var(--pk); }
+input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--s3); outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--pk); box-shadow: 0 0 8px rgba(255,60,171,.4); }
+
+/* ── TOAST ───────────────────────────────────────────────────────────── */
+.toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); z-index: 500; background: var(--s2); border: 1px solid var(--border2); border-radius: 12px; padding: 10px 18px; font-size: 13px; font-weight: 500; opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap; }
+.toast.ok  { border-color: rgba(0,229,160,.4); color: var(--gr); }
+.toast.err { border-color: rgba(255,60,171,.4); color: var(--pk); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── PUBLISHER STATUS BADGE ──────────────────────────────────────────── */
+.pub-status { display: flex; align-items: center; gap: 7px; font-size: 12.5px; padding: 8px 12px; border-radius: 9px; background: var(--s2); border: 1px solid var(--border); }
+.pub-status.ok  { border-color: rgba(0,229,160,.3); }
+.pub-status.nok { border-color: rgba(255,140,66,.3); color: var(--or); }
+.url-preview { font-family: var(--fm); font-size: 11px; color: var(--muted); word-break: break-all; margin-top: 5px; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">Insta<em>Bot</em><span>v3.0</span></div>
+  <div class="topright">
+    <div class="srv"><div class="dot" id="dot"></div><span id="srv-label">Pripájam...</span></div>
+    <div class="settings-btn" onclick="openSettings()" title="Nastavenia API">⚙️</div>
+  </div>
+</div>
+
+<!-- MAIN TABS -->
+<div class="tabs-nav">
+  <div class="tab-btn active" onclick="showTab('pub')" id="t-pub">📤 Publikovať</div>
+  <div class="tab-btn" onclick="showTab('plan')" id="t-plan">📅 Plán</div>
+  <div class="tab-btn" onclick="showTab('bot')" id="t-bot">🤖 Bot</div>
+</div>
+
+<!-- ════ PUBLISHER PANE ═══════════════════════════════════════════════ -->
+<div class="pane active" id="pane-pub">
+
+  <div class="sub-tabs">
+    <div class="sub-tab active" onclick="setPubType('post')"  id="st-post">📸 Post</div>
+    <div class="sub-tab"       onclick="setPubType('reel')"  id="st-reel">🎬 Reel</div>
+    <div class="sub-tab"       onclick="setPubType('story')" id="st-story">⚡ Story</div>
+  </div>
+
+  <!-- Media drop zone -->
+  <div class="card">
+    <div class="card-body" style="padding-bottom:8px">
+      <div id="dz-preview" class="dz-preview" style="display:none">
+        <img id="dz-img" style="display:none">
+        <video id="dz-vid" controls style="display:none"></video>
+        <button class="dz-clear" onclick="clearMedia()">✕</button>
+      </div>
+      <div class="dropzone" id="dropzone" ondragover="dzDrag(event,true)" ondragleave="dzDrag(event,false)" ondrop="dzDrop(event)">
+        <input type="file" id="dz-file" accept="image/*,video/mp4,video/quicktime" onchange="handleFile(this.files[0])">
+        <span class="dz-icon" id="dz-icon">🖼️</span>
+        <div class="dz-label" id="dz-label">Pretiahni alebo klikni</div>
+        <div class="dz-sub" id="dz-sub">JPG, PNG, MP4, MOV</div>
+      </div>
+      <div class="dz-upload-progress" id="upload-prog">
+        <div class="dz-upload-progress-bar" id="upload-bar"></div>
+      </div>
+      <div id="url-row" style="margin-top:6px">
+        <div class="field-group">
+          <div class="field-label">alebo URL média</div>
+          <input type="url" id="media-url" placeholder="https://..." oninput="updateMediaPreviewFromUrl()">
+          <div class="url-preview" id="url-preview"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Caption + AI -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-title">Popis</div>
+      <button class="btn btn-ghost" onclick="toggleAI()">✨ AI asistent</button>
+    </div>
+    <div class="ai-panel" id="ai-panel">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <select id="ai-niche" style="flex:1;min-width:110px;font-size:12.5px;padding:7px 10px">
+          <option value="lifestyle">Lifestyle</option>
+          <option value="ai influencer">AI Influencer</option>
+          <option value="fitness">Fitness</option>
+          <option value="fashion">Fashion</option>
+          <option value="music/rave">Music / Rave</option>
+          <option value="hip-hop">Hip-Hop</option>
+          <option value="photography">Photography</option>
+          <option value="tech">Tech</option>
+        </select>
+        <select id="ai-tone" style="flex:1;min-width:110px;font-size:12.5px;padding:7px 10px">
+          <option value="engaging">Engaging</option>
+          <option value="hype">Hype 🔥</option>
+          <option value="aesthetic">Aesthetic</option>
+          <option value="minimal">Minimal</option>
+          <option value="funny">Funny</option>
+        </select>
+        <select id="ai-lang" style="flex:1;min-width:90px;font-size:12.5px;padding:7px 10px">
+          <option value="en">English</option>
+          <option value="sk">Slovensky</option>
+        </select>
+      </div>
+      <input type="text" id="ai-kw" placeholder="Kľúčové slová (voliteľné)..." style="margin-bottom:8px">
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="genCaption()">✨ Generovať</button>
+      <div id="ai-results"></div>
+    </div>
+    <div class="card-body">
+      <div class="field-group">
+        <div class="field-label">Popis <span class="char-count" id="cap-cc">0 / 2200</span></div>
+        <textarea id="caption" placeholder="Napíš alebo vygeneruj popis..." oninput="updateCharCount()" rows="4"></textarea>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Hashtagy</div>
+        <div class="chips-wrap" id="hashtag-chips"></div>
+        <div class="chip-input-row">
+          <input type="text" id="ht-input" placeholder="#hashtag..." onkeydown="if(event.key==='Enter'||event.key===' ')addChip('hashtag')">
+          <button class="chip-add-btn" onclick="addChip('hashtag')">+ Pridať</button>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="field-label">Tagnutie účtov</div>
+        <div class="chips-wrap" id="mention-chips"></div>
+        <div class="chip-input-row">
+          <input type="text" id="mt-input" placeholder="@účet..." onkeydown="if(event.key==='Enter')addChip('mention')">
+          <button class="chip-add-btn" onclick="addChip('mention')">+ Pridať</button>
+        </div>
+      </div>
+      <!-- Music (len pre Reel) -->
+      <div id="music-section" style="display:none">
+        <div class="field-group">
+          <div class="field-label">🎵 Hudba (informatívne – nastaví sa ručne v IG)</div>
+          <input type="text" id="music-field" placeholder="Názov – Interpret...">
+        </div>
+        <div class="section-label" style="margin-top:6px">Trending zvuky pre AI influencers</div>
+        <div class="music-suggestions" id="music-sugg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Publish actions -->
+  <div class="btn-row" style="margin-bottom:14px">
+    <button class="btn btn-secondary" onclick="openScheduleModal()">📅 Naplánovať</button>
+    <button class="btn btn-primary"   onclick="publishNow()">🚀 Publikovať teraz</button>
+  </div>
+
+  <!-- Schedule mini modal -->
+  <div class="card" id="schedule-card" style="display:none">
+    <div class="card-head">
+      <div class="card-title">Naplánovať príspevok</div>
+      <button class="btn-ghost btn" onclick="closeScheduleModal()">✕</button>
+    </div>
+    <div class="card-body">
+      <div class="field-group">
+        <div class="field-label">Dátum a čas</div>
+        <input type="datetime-local" id="sched-dt">
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="schedulePost()">📅 Pridať do plánu</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ════ PLAN PANE ═══════════════════════════════════════════════════ -->
+<div class="pane" id="pane-plan">
+  <div class="section-label" style="margin-bottom:10px">Naplánované príspevky</div>
+  <div id="sched-list">
+    <div class="empty-state"><div class="ei">📭</div><div class="et">Žiadne naplánované príspevky</div></div>
+  </div>
+</div>
+
+<!-- ════ BOT PANE ════════════════════════════════════════════════════ -->
+<div class="pane" id="pane-bot">
+
+  <div class="bot-banner" id="bot-banner">
+    <div class="bb-left">
+      <div class="bb-dot"></div>
+      <div>
+        <div class="bb-label" id="bb-label">Neaktívny</div>
+        <div class="bb-meta" id="bb-meta">Stlač štart</div>
+      </div>
+    </div>
+    <span id="bb-tag" style="font-family:var(--fm);font-size:12px;color:var(--muted)"></span>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">❤️ Lajky</div>
+      <div class="stat-val pk" id="s-likes">—</div>
+      <div class="stat-sub">celkom <span id="s-likes-t">—</span></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">💬 Komentáre</div>
+      <div class="stat-val gr" id="s-cmt">—</div>
+      <div class="stat-sub">celkom <span id="s-cmt-t">—</span></div>
+    </div>
+    <div class="stat-card stat-wide">
+      <div><div class="stat-label">📸 Posty</div><div class="stat-val bl" id="s-posts" style="font-size:22px">—</div></div>
+      <div style="text-align:right"><div class="stat-label">⏱ Beh</div><div class="stat-val" id="s-time" style="font-size:18px;color:var(--muted)">—</div></div>
+    </div>
+  </div>
+
+  <!-- Mode selector -->
+  <div class="section-label">Režim</div>
+  <div class="sub-tabs" style="margin-bottom:12px">
+    <div class="sub-tab active" onclick="setBotMode('smart_feed')"     id="bm-smart">📱 Smart Feed</div>
+    <div class="sub-tab"       onclick="setBotMode('viral_accounts')"  id="bm-viral">👤 Viral účty</div>
+    <div class="sub-tab"       onclick="setBotMode('hashtags')"        id="bm-hash">🔎 Hashtagy</div>
+  </div>
+
+  <!-- Viral accounts (shown when mode=viral_accounts) -->
+  <div id="viral-section" style="display:none">
+    <div class="card">
+      <div class="card-head"><div class="card-title">Viral účty</div></div>
+      <div class="card-body">
+        <div class="chips-wrap" id="viral-chips"></div>
+        <div class="chip-input-row" style="margin-top:8px">
+          <input type="text" id="viral-input" placeholder="@účet..." onkeydown="if(event.key==='Enter')addBotChip('viral')">
+          <button class="chip-add-btn" onclick="addBotChip('viral')">+ Pridať</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hashtags (shown when mode=hashtags) -->
+  <div id="hash-section" style="display:none">
+    <div class="card">
+      <div class="card-head"><div class="card-title">Hashtagy</div></div>
+      <div class="card-body">
+        <div class="chips-wrap" id="hash-chips"></div>
+        <div class="chip-input-row" style="margin-top:8px">
+          <input type="text" id="hash-input" placeholder="hashtag (bez #)..." onkeydown="if(event.key==='Enter')addBotChip('hash')">
+          <button class="chip-add-btn" onclick="addBotChip('hash')">+ Pridať</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toggles -->
+  <div class="section-label">Akcie</div>
+  <div class="card"><div class="card-body" style="padding:0 16px">
+    <div class="row-toggle"><div class="rt-info"><div class="rt-name">Lajkovanie</div><div class="rt-desc">Like na ~80 % postov</div></div><label class="toggle-wrap"><input type="checkbox" id="t-like" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label></div>
+    <div class="row-toggle"><div class="rt-info"><div class="rt-name">Komentovanie</div><div class="rt-desc">Náhodný komentár (~15 %)</div></div><label class="toggle-wrap"><input type="checkbox" id="t-cmt" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label></div>
+    <div class="row-toggle"><div class="rt-info"><div class="rt-name">Stories</div><div class="rt-desc">Prehliadanie stories (35 %)</div></div><label class="toggle-wrap"><input type="checkbox" id="t-stories" checked><div class="toggle-track"><div class="toggle-thumb"></div></div></label></div>
+  </div></div>
+
+  <!-- Comments list -->
+  <div class="section-label">Komentáre</div>
+  <div class="card">
+    <div class="card-body">
+      <div id="cmt-list" style="display:flex;flex-direction:column;gap:6px"></div>
+      <div class="chip-input-row" style="margin-top:10px">
+        <input type="text" id="cmt-input" placeholder="Nový komentár..." onkeydown="if(event.key==='Enter')addComment()">
+        <button class="chip-add-btn" onclick="addComment()">+ Pridať</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Save + clear -->
+  <div class="btn-row" style="margin-bottom:14px">
+    <button class="btn btn-secondary" onclick="clearSeen()">🗑 Vymazať históriu</button>
+    <button class="btn btn-ghost"     onclick="saveConfig()">💾 Uložiť</button>
+  </div>
+
+  <!-- Log -->
+  <div class="section-label">Živý log</div>
+  <div class="log-wrap" id="log"></div>
+
+  <div style="height:70px"></div>
+</div>
+
+<!-- BOT CTA (fixed bottom) -->
+<div class="bot-cta-wrap" id="bot-cta-wrap" style="display:none">
+  <button class="bot-cta dis" id="bot-cta" onclick="toggleBot()">⏳ Pripájam...</button>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeSettings()"></div>
+<div class="settings-sheet" id="settings-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">⚙️ Nastavenia IG API</div>
+
+  <div class="section-label">Instagram Graph API</div>
+  <p style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:12px">
+    Vyžaduje Business/Creator účet prepojený s Facebook Page.<br>
+    1. <a href="https://developers.facebook.com/apps" target="_blank" style="color:var(--pk)">developers.facebook.com</a> → Nová app<br>
+    2. Pridaj produkt: <strong>Instagram Graph API</strong><br>
+    3. Vygeneruj <strong>User Access Token</strong> s oprávneniami <code style="font-size:11px;background:var(--s3);padding:1px 4px;border-radius:3px">instagram_basic, instagram_content_publish</code><br>
+    4. Nájdi <strong>IG User ID</strong> cez <a href="https://developers.facebook.com/tools/explorer" target="_blank" style="color:var(--pk)">Graph Explorer</a>
+  </p>
+
+  <div class="field-group" style="margin-bottom:10px">
+    <div class="field-label">Access Token</div>
+    <input type="text" id="cfg-token" placeholder="EAAxxxx..." oninput="pubConfigChanged()">
+  </div>
+  <div class="field-group" style="margin-bottom:10px">
+    <div class="field-label">IG User ID</div>
+    <input type="text" id="cfg-uid" placeholder="1234567890" oninput="pubConfigChanged()">
+  </div>
+  <div class="field-group" style="margin-bottom:12px">
+    <div class="field-label">Verejná URL servera <span style="color:var(--muted)">(pre auto-publish z lokálnych súborov)</span></div>
+    <input type="url" id="cfg-puburl" placeholder="https://abc.ngrok.io">
+    <div class="url-preview">Potrebné len ak nahrávate súbory cez dashboard.<br>Použiť ngrok: <code style="font-size:11px;background:var(--s3);padding:1px 5px;border-radius:3px">ngrok http 5000</code></div>
+  </div>
+
+  <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:10px" onclick="savePubConfig()">💾 Uložiť a overiť</button>
+  <div id="verify-result" style="font-size:13px;text-align:center;color:var(--muted)"></div>
+
+  <div class="section-label" style="margin-top:20px">Rýchlosť bota</div>
+  <div class="slider-row"><div class="slider-head"><span class="slider-name">Pauza min (s)</span><span class="slider-val" id="v-pmin">9s</span></div><input type="range" id="s-pmin" min="5" max="40" value="9" oninput="document.getElementById('v-pmin').textContent=this.value+'s'"></div>
+  <div class="slider-row"><div class="slider-head"><span class="slider-name">Pauza max (s)</span><span class="slider-val" id="v-pmax">30s</span></div><input type="range" id="s-pmax" min="15" max="70" value="30" oninput="document.getElementById('v-pmax').textContent=this.value+'s'"></div>
+  <div class="slider-row"><div class="slider-head"><span class="slider-name">Pauza medzi kolami</span><span class="slider-val" id="v-rp">100s</span></div><input type="range" id="s-rp" min="60" max="300" step="10" value="100" oninput="document.getElementById('v-rp').textContent=this.value+'s'"></div>
+  <div class="slider-row"><div class="slider-head"><span class="slider-name">Max akcií / deň</span><span class="slider-val" id="v-max">150</span></div><input type="range" id="s-max" min="50" max="250" step="10" value="150" oninput="document.getElementById('v-max').textContent=this.value"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ────────────────────────────────────────────────────────────────────
+const API = 'http://localhost:5000';
+let online = false, running = false;
+let pubType   = 'post';
+let botMode   = 'smart_feed';
+let hashtags  = [], mentions = [];
+let botHashtags = [], botViralAccounts = [], comments = [];
+let uploadedUrl = '';
+let cfg = {};
+
+const TRENDING_MUSIC = {
+  'post':  ['Espresso – Sabrina Carpenter', 'Carnival – ¥$', 'Starboy – The Weeknd', 'Levitating – Dua Lipa'],
+  'reel':  ['Harlequin – Lady Gaga', 'Beautiful Things – Benson Boone', 'Die With A Smile – Bruno Mars', 'Flowers – Miley Cyrus', 'Cruel Summer – Taylor Swift', 'Calm Down – Rema'],
+  'story': ['Too Sweet – Hozier', 'Water – Tyla', 'Greedy – Tate McRae']
+};
+
+// ── TABS ─────────────────────────────────────────────────────────────────────
+function showTab(t) {
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pane-' + t).classList.add('active');
+  document.getElementById('t-' + t).classList.add('active');
+  document.getElementById('bot-cta-wrap').style.display = (t === 'bot') ? 'block' : 'none';
+  if (t === 'plan') loadSchedule();
+}
+
+// ── PUB TYPE ─────────────────────────────────────────────────────────────────
+function setPubType(t) {
+  pubType = t;
+  ['post','reel','story'].forEach(x => document.getElementById('st-'+x).classList.toggle('active', x===t));
+  const icons = {post:'🖼️',reel:'🎬',story:'⚡'};
+  const subs  = {post:'JPG, PNG — вертикально 4:5',reel:'MP4, MOV — 9:16',story:'JPG, PNG, MP4 — 9:16'};
+  document.getElementById('dz-icon').textContent  = icons[t];
+  document.getElementById('dz-sub').textContent   = subs[t];
+  document.getElementById('music-section').style.display = (t === 'reel') ? 'block' : 'none';
+  renderMusicSugg();
+}
+
+function renderMusicSugg() {
+  const el = document.getElementById('music-sugg');
+  el.innerHTML = '';
+  (TRENDING_MUSIC[pubType] || []).forEach(m => {
+    const b = document.createElement('div');
+    b.className = 'music-pill';
+    b.textContent = '🎵 ' + m;
+    b.onclick = () => { document.getElementById('music-field').value = m; };
+    el.appendChild(b);
+  });
+}
+
+// ── DRAG & DROP ──────────────────────────────────────────────────────────────
+function dzDrag(e, on) { e.preventDefault(); document.getElementById('dropzone').classList.toggle('drag-over', on); }
+function dzDrop(e) { e.preventDefault(); dzDrag(e, false); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }
+
+function handleFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const isVideo = ['mp4','mov'].includes(ext);
+
+  // Show preview immediately
+  const prev = document.getElementById('dz-preview');
+  const img  = document.getElementById('dz-img');
+  const vid  = document.getElementById('dz-vid');
+  document.getElementById('dropzone').style.display = 'none';
+  prev.style.display = 'block';
+  if (isVideo) {
+    vid.style.display = 'block'; img.style.display = 'none';
+    vid.src = URL.createObjectURL(file);
+  } else {
+    img.style.display = 'block'; vid.style.display = 'none';
+    img.src = URL.createObjectURL(file);
+  }
+
+  // Upload to server
+  const prog = document.getElementById('upload-prog');
+  const bar  = document.getElementById('upload-bar');
+  prog.style.display = 'block'; bar.style.width = '0%';
+
+  const fd = new FormData(); fd.append('file', file);
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', API + '/api/pub/upload');
+  xhr.upload.onprogress = e => { if(e.lengthComputable) bar.style.width = (e.loaded/e.total*100)+'%'; };
+  xhr.onload = () => {
+    prog.style.display = 'none';
+    try {
+      const r = JSON.parse(xhr.responseText);
+      if (r.ok) {
+        uploadedUrl = r.url;
+        document.getElementById('media-url').value = r.url;
+        document.getElementById('url-preview').textContent = '✅ ' + r.url;
+        toast('Súbor nahraný', 'ok');
+      } else { toast('Chyba: ' + r.error, 'err'); }
+    } catch(e) { /* server offline, use local preview */ uploadedUrl = ''; }
+  };
+  xhr.onerror = () => { prog.style.display='none'; toast('Server offline – zadaj URL ručne', 'err'); };
+  xhr.send(fd);
+}
+
+function clearMedia() {
+  document.getElementById('dz-preview').style.display = 'none';
+  document.getElementById('dropzone').style.display   = 'block';
+  document.getElementById('dz-img').src = '';
+  document.getElementById('dz-vid').src = '';
+  document.getElementById('media-url').value = '';
+  document.getElementById('url-preview').textContent = '';
+  document.getElementById('dz-file').value = '';
+  uploadedUrl = '';
+}
+
+function updateMediaPreviewFromUrl() {
+  const u = document.getElementById('media-url').value.trim();
+  uploadedUrl = u;
+  document.getElementById('url-preview').textContent = u ? '🔗 ' + u : '';
+}
+
+// ── CHIPS ────────────────────────────────────────────────────────────────────
+function addChip(type) {
+  const inp = document.getElementById(type==='hashtag'?'ht-input':'mt-input');
+  let val = inp.value.trim().replace(/^[#@\s]+/, '');
+  if (!val) return;
+  if (type === 'hashtag') { hashtags.push(val); renderChips('hashtag'); }
+  else { mentions.push(val); renderChips('mention'); }
+  inp.value = '';
+}
+
+function removeChip(type, idx) {
+  if (type === 'hashtag') hashtags.splice(idx, 1);
+  else mentions.splice(idx, 1);
+  renderChips(type);
+}
+
+function renderChips(type) {
+  const arr = type === 'hashtag' ? hashtags : mentions;
+  const id  = type === 'hashtag' ? 'hashtag-chips' : 'mention-chips';
+  const pfx = type === 'hashtag' ? '#' : '@';
+  document.getElementById(id).innerHTML = arr.map((v,i) =>
+    `<div class="chip">${pfx}${v}<button class="rm" onclick="removeChip('${type}',${i})">✕</button></div>`
+  ).join('');
+}
+
+// ── CHAR COUNT ───────────────────────────────────────────────────────────────
+function updateCharCount() {
+  const n = document.getElementById('caption').value.length;
+  document.getElementById('cap-cc').textContent = n + ' / 2200';
+  document.getElementById('cap-cc').style.color = n > 2000 ? 'var(--pk)' : '';
+}
+
+// ── AI CAPTION ───────────────────────────────────────────────────────────────
+function toggleAI() {
+  document.getElementById('ai-panel').classList.toggle('open');
+}
+
+async function genCaption() {
+  const res = document.getElementById('ai-results');
+  res.innerHTML = '<div class="ai-loading">✨ Generujem...</div>';
+  try {
+    const r = await fetch(API + '/api/caption', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        type:     pubType,
+        niche:    document.getElementById('ai-niche').value,
+        tone:     document.getElementById('ai-tone').value,
+        lang:     document.getElementById('ai-lang').value,
+        keywords: document.getElementById('ai-kw').value
+      })
+    });
+    const data = await r.json();
+    if (!data.ok) { res.innerHTML = '<div class="ai-loading" style="color:var(--pk)">Chyba: ' + data.error + '</div>'; return; }
+    const captions = data.result?.captions || [];
+    res.innerHTML = captions.map((c,i) => `
+      <div class="ai-result-item" onclick="applyCaption(${i})">
+        <div>${c.text}</div>
+        <div class="ai-tags">${(c.hashtags||[]).slice(0,8).map(t=>`<span class="ai-tag">#${t}</span>`).join('')}</div>
+      </div>
+    `).join('');
+    res._data = captions;
+  } catch(e) {
+    res.innerHTML = '<div class="ai-loading" style="color:var(--pk)">Server offline</div>';
+  }
+}
+
+function applyCaption(i) {
+  const res = document.getElementById('ai-results');
+  const c = (res._data || [])[i];
+  if (!c) return;
+  document.getElementById('caption').value = c.text;
+  updateCharCount();
+  const tags = c.hashtags || [];
+  tags.forEach(t => { if (!hashtags.includes(t)) hashtags.push(t); });
+  renderChips('hashtag');
+  toast('Popis aplikovaný', 'ok');
+}
+
+// ── PUBLISH ───────────────────────────────────────────────────────────────────
+async function publishNow() {
+  const url = document.getElementById('media-url').value.trim() || uploadedUrl;
+  if (!url) { toast('Najprv nahraj médium alebo zadaj URL', 'err'); return; }
+  const caption = document.getElementById('caption').value;
+  try {
+    const r = await fetch(API + '/api/pub/publish', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ type: pubType, media_url: url, caption, hashtags, mentions,
+                             music: document.getElementById('music-field')?.value || '' })
+    });
+    const data = await r.json();
+    if (data.ok) { toast('✅ Príspevok zverejnený!', 'ok'); resetPubForm(); }
+    else { toast('❌ ' + (data.error || 'Chyba'), 'err'); }
+  } catch(e) { toast('Server offline', 'err'); }
+}
+
+function resetPubForm() {
+  clearMedia();
+  document.getElementById('caption').value = '';
+  document.getElementById('music-field') && (document.getElementById('music-field').value = '');
+  hashtags = []; mentions = [];
+  renderChips('hashtag'); renderChips('mention');
+  updateCharCount();
+}
+
+// ── SCHEDULER ─────────────────────────────────────────────────────────────────
+function openScheduleModal() {
+  const card = document.getElementById('schedule-card');
+  card.style.display = 'block';
+  // Set default = now + 1 day
+  const d = new Date(Date.now() + 86400000);
+  d.setMinutes(0);
+  document.getElementById('sched-dt').value = d.toISOString().slice(0,16);
+}
+function closeScheduleModal() { document.getElementById('schedule-card').style.display = 'none'; }
+
+async function schedulePost() {
+  const url = document.getElementById('media-url').value.trim() || uploadedUrl;
+  if (!url) { toast('Najprv nahraj médium', 'err'); return; }
+  const dt = document.getElementById('sched-dt').value;
+  if (!dt)  { toast('Zvol dátum', 'err'); return; }
+  const caption = document.getElementById('caption').value;
+  try {
+    const r = await fetch(API + '/api/schedule', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ type: pubType, media_url: url, caption, hashtags, mentions,
+                             music: document.getElementById('music-field')?.value || '',
+                             scheduled_at: new Date(dt).toISOString() })
+    });
+    const data = await r.json();
+    if (data.ok) { toast('📅 Naplánované!', 'ok'); closeScheduleModal(); resetPubForm(); loadSchedule(); }
+    else { toast('Chyba: ' + data.error, 'err'); }
+  } catch(e) { toast('Server offline', 'err'); }
+}
+
+async function loadSchedule() {
+  try {
+    const r = await fetch(API + '/api/schedule');
+    const items = await r.json();
+    renderSchedule(items);
+  } catch(e) {
+    document.getElementById('sched-list').innerHTML = '<div class="empty-state"><div class="ei">⚠️</div><div class="et">Server offline</div></div>';
+  }
+}
+
+function renderSchedule(items) {
+  const el = document.getElementById('sched-list');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-state"><div class="ei">📭</div><div class="et">Žiadne naplánované príspevky</div></div>';
+    return;
+  }
+  const icons = {post:'📸',reel:'🎬',story:'⚡'};
+  el.innerHTML = [...items].reverse().map(p => {
+    const dt = new Date(p.scheduled_at).toLocaleString('sk-SK',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    const isImg = p.media_url && !p.media_url.match(/\.(mp4|mov)/i);
+    const thumb = isImg ? `<img src="${p.media_url}" class="sched-thumb" onerror="this.textContent='${icons[p.type]||'📎'}';this.style.fontSize='20px'">` 
+                        : `<div class="sched-thumb">${icons[p.type]||'📎'}</div>`;
+    return `<div class="sched-item">
+      ${thumb}
+      <div class="sched-info">
+        <div class="sched-type ${p.type}">${(p.type||'').toUpperCase()}</div>
+        <div class="sched-caption">${p.caption || '(bez popisu)'}</div>
+        <div class="sched-time">📅 ${dt}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <span class="sched-status ${p.status}">${p.status}</span>
+        ${p.status==='pending' ? `<button class="sched-del" onclick="deleteScheduled('${p.id}')">🗑</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function deleteScheduled(id) {
+  try {
+    await fetch(API + '/api/schedule/' + id, {method:'DELETE'});
+    loadSchedule();
+  } catch(e) {}
+}
+
+// ── BOT LOGIC ─────────────────────────────────────────────────────────────────
+function setBotMode(m) {
+  botMode = m;
+  ['smart','viral','hash'].forEach(x => document.getElementById('bm-'+x).classList.toggle('active', 
+    (x==='smart'&&m==='smart_feed')||(x==='viral'&&m==='viral_accounts')||(x==='hash'&&m==='hashtags')));
+  document.getElementById('viral-section').style.display = (m==='viral_accounts') ? 'block' : 'none';
+  document.getElementById('hash-section').style.display  = (m==='hashtags') ? 'block' : 'none';
+}
+
+function addBotChip(type) {
+  const inp = document.getElementById(type+'-input');
+  let val = inp.value.trim().replace(/^[@#\s]+/,'');
+  if (!val) return;
+  if (type === 'viral') botViralAccounts.push(val);
+  else botHashtags.push(val);
+  inp.value = '';
+  renderBotChips();
+}
+
+function removeBotChip(type, i) {
+  if (type === 'viral') botViralAccounts.splice(i,1);
+  else botHashtags.splice(i,1);
+  renderBotChips();
+}
+
+function renderBotChips() {
+  document.getElementById('viral-chips').innerHTML = botViralAccounts.map((v,i) =>
+    `<div class="chip">@${v}<button class="rm" onclick="removeBotChip('viral',${i})">✕</button></div>`).join('');
+  document.getElementById('hash-chips').innerHTML = botHashtags.map((v,i) =>
+    `<div class="chip">#${v}<button class="rm" onclick="removeBotChip('hash',${i})">✕</button></div>`).join('');
+}
+
+function addComment() {
+  const inp = document.getElementById('cmt-input');
+  const val = inp.value.trim();
+  if (!val) return;
+  comments.push(val);
+  inp.value = '';
+  renderComments();
+}
+function removeComment(i) { comments.splice(i,1); renderComments(); }
+function renderComments() {
+  document.getElementById('cmt-list').innerHTML = comments.map((c,i) =>
+    `<div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px">
+      <span>${c}</span>
+      <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px" onclick="removeComment(${i})">✕</button>
+    </div>`
+  ).join('');
+}
+
+async function toggleBot() {
+  if (!online) return;
+  const endpoint = running ? '/api/stop' : '/api/start';
+  const payload  = running ? {} : { config: buildBotConfig() };
+  try {
+    await fetch(API + endpoint, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+  } catch(e) {}
+}
+
+function buildBotConfig() {
+  return {
+    mode:            botMode,
+    hashtags:        botHashtags,
+    viral_accounts:  botViralAccounts,
+    comments_list:   comments.length ? comments : cfg.comments_list || [],
+    like_enabled:    document.getElementById('t-like').checked,
+    comment_enabled: document.getElementById('t-cmt').checked,
+    story_view_prob: document.getElementById('t-stories').checked ? 0.35 : 0,
+    pause_min:   parseInt(document.getElementById('s-pmin')?.value||9),
+    pause_max:   parseInt(document.getElementById('s-pmax')?.value||30),
+    round_pause: parseInt(document.getElementById('s-rp')?.value||100),
+    max_daily_actions: parseInt(document.getElementById('s-max')?.value||150),
+    feed_mode_enabled: (botMode === 'smart_feed')
+  };
+}
+
+async function saveConfig() {
+  try {
+    await fetch(API + '/api/config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(buildBotConfig())});
+    toast('Uložené', 'ok');
+  } catch(e) { toast('Server offline', 'err'); }
+}
+
+async function clearSeen() {
+  if (!confirm('Vymazať históriu videných postov?')) return;
+  try {
+    await fetch(API + '/api/clear_seen', {method:'POST'});
+    toast('História vymazaná', 'ok');
+  } catch(e) {}
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────────────────────
+function openSettings() {
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('settings-sheet').classList.add('open');
+  loadPubConfig();
+}
+function closeSettings() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('settings-sheet').classList.remove('open');
+}
+
+async function loadPubConfig() {
+  try {
+    const r = await fetch(API + '/api/pub/config');
+    const d = await r.json();
+    document.getElementById('cfg-token').value  = d.has_token ? '••••••••' : '';
+    document.getElementById('cfg-uid').value    = d.ig_user_id || '';
+    document.getElementById('cfg-puburl').value = d.server_public_url || '';
+  } catch(e) {}
+}
+
+let _tokenChanged = false;
+function pubConfigChanged() { _tokenChanged = true; }
+
+async function savePubConfig() {
+  const token  = document.getElementById('cfg-token').value.trim();
+  const uid    = document.getElementById('cfg-uid').value.trim();
+  const puburl = document.getElementById('cfg-puburl').value.trim();
+  const res    = document.getElementById('verify-result');
+
+  if (!uid) { toast('Zadaj IG User ID', 'err'); return; }
+  const payload = { ig_user_id: uid, server_public_url: puburl };
+  if (_tokenChanged && !token.startsWith('•')) payload.access_token = token;
+
+  res.textContent = '🔄 Overujem...';
+  try {
+    await fetch(API + '/api/pub/config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)});
+    const vr = await fetch(API + '/api/pub/verify');
+    const vd = await vr.json();
+    if (vd.ok) {
+      res.innerHTML = `<span style="color:var(--gr)">✅ @${vd.username} — ${(vd.followers||0).toLocaleString()} followerov</span>`;
+      _tokenChanged = false;
+    } else {
+      res.innerHTML = `<span style="color:var(--pk)">❌ ${vd.error}</span>`;
+    }
+  } catch(e) { res.innerHTML = '<span style="color:var(--or)">⚠️ Server offline</span>'; }
+}
+
+// ── POLL ─────────────────────────────────────────────────────────────────────
+async function poll() {
+  try {
+    const r  = await fetch(API + '/api/status');
+    const st = await r.json();
+
+    if (!online) {
+      online = true;
+      document.getElementById('dot').className = 'dot on';
+      document.getElementById('srv-label').textContent = 'Online';
+      document.getElementById('bot-cta').className = 'bot-cta start';
+      loadBotConfig();
+    }
+
+    running = st.running;
+    document.getElementById('bot-cta').textContent = running ? '⏹ Zastaviť bota' : '▶ Spustiť bota';
+    document.getElementById('bot-cta').className   = running ? 'bot-cta stop' : 'bot-cta start';
+
+    const banner = document.getElementById('bot-banner');
+    banner.className = 'bot-banner' + (running ? ' run' : st.blocked ? ' blk' : '');
+    document.getElementById('bb-label').textContent = running ? 'Bot beží' : st.blocked ? 'Blokovaný' : 'Neaktívny';
+
+    const tag = st.current_tag || st.current_account;
+    document.getElementById('bb-meta').textContent = running ? (tag ? `#${tag}` : 'Smart feed...') : '';
+    document.getElementById('bb-tag').textContent  = '';
+
+    document.getElementById('s-likes').textContent   = st.likes   || 0;
+    document.getElementById('s-likes-t').textContent = st.likes_total || 0;
+    document.getElementById('s-cmt').textContent     = st.comments || 0;
+    document.getElementById('s-cmt-t').textContent   = st.comments_total || 0;
+    document.getElementById('s-posts').textContent   = st.posts   || 0;
+
+    const el = st.elapsed || 0;
+    const h = Math.floor(el/3600), m = Math.floor((el%3600)/60), s = el%60;
+    document.getElementById('s-time').textContent = h>0 ? `${h}h ${m}m` : m>0 ? `${m}m ${s}s` : el>0 ? `${s}s` : '—';
+
+    // Log
+    const logEl = document.getElementById('log');
+    if (st.log && st.log.length) {
+      logEl.innerHTML = st.log.slice(0,40).map(e =>
+        `<div class="log-entry"><span class="log-time">${e.time}</span><span class="log-msg ${e.level||'info'}">${e.msg}</span></div>`
+      ).join('');
+    }
+
+  } catch(e) {
+    if (online) {
+      online = false;
+      document.getElementById('dot').className = 'dot err';
+      document.getElementById('srv-label').textContent = 'Offline';
+      document.getElementById('bot-cta').textContent = '⏳ Offline...';
+      document.getElementById('bot-cta').className = 'bot-cta dis';
+    }
+  }
+}
+
+async function loadBotConfig() {
+  try {
+    const r = await fetch(API + '/api/config');
+    cfg = await r.json();
+    botMode = cfg.mode || 'smart_feed';
+    botHashtags        = cfg.hashtags       || [];
+    botViralAccounts   = cfg.viral_accounts || [];
+    comments           = cfg.comments_list  || [];
+
+    setBotMode(botMode);
+    renderBotChips();
+    renderComments();
+
+    document.getElementById('t-like').checked    = cfg.like_enabled !== false;
+    document.getElementById('t-cmt').checked     = cfg.comment_enabled !== false;
+    document.getElementById('t-stories').checked = (cfg.story_view_prob || 0) > 0;
+
+    if (document.getElementById('s-pmin')) {
+      document.getElementById('s-pmin').value = cfg.pause_min || 9;
+      document.getElementById('s-pmax').value = cfg.pause_max || 30;
+      document.getElementById('s-rp').value   = cfg.round_pause || 100;
+      document.getElementById('s-max').value  = cfg.max_daily_actions || 150;
+      document.getElementById('v-pmin').textContent = (cfg.pause_min||9) + 's';
+      document.getElementById('v-pmax').textContent = (cfg.pause_max||30) + 's';
+      document.getElementById('v-rp').textContent   = (cfg.round_pause||100) + 's';
+      document.getElementById('v-max').textContent  = cfg.max_daily_actions || 150;
+    }
+  } catch(e) {}
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className   = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+setPubType('post');
+setBotMode('smart_feed');
+showTab('pub');
+poll();
+setInterval(poll, 2000);
+</script>
+</body>
+</html>
