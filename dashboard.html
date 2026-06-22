@@ -549,7 +549,7 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
 
 <script>
 // ── STATE ────────────────────────────────────────────────────────────────────
-const API = 'http://localhost:5000';
+const API = window.location.origin;
 let online = false, running = false;
 let pubType   = 'post';
 let botMode   = 'smart_feed';
