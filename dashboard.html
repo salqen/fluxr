@@ -253,10 +253,18 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="logo">Insta<em>Bot</em><span>v3.0</span></div>
+  <div class="logo">Insta<em>Bot</em><span>v3.1</span></div>
   <div class="topright">
     <div class="srv"><div class="dot" id="dot"></div><span id="srv-label">Pripájam...</span></div>
-    <div class="settings-btn" onclick="openSettings()" title="Nastavenia API">⚙️</div>
+    <div id="user-chip" style="display:none;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:4px 10px 4px 4px;cursor:pointer" onclick="toggleUserMenu()">
+      <img id="user-avatar" src="" width="24" height="24" style="border-radius:50%;object-fit:cover;display:none">
+      <span id="user-name" style="font-size:12px;font-weight:600;color:var(--sub)">@</span>
+      <span style="color:var(--muted);font-size:11px">▾</span>
+    </div>
+    <div id="user-menu" style="display:none;position:absolute;top:52px;right:12px;background:var(--s1);border:1px solid var(--border2);border-radius:12px;padding:8px;z-index:999;min-width:160px">
+      <a href="/auth/logout" style="display:flex;align-items:center;gap:8px;padding:9px 12px;color:var(--pk);text-decoration:none;font-size:13px;font-weight:600;border-radius:8px" onmouseover="this.style.background='var(--s2)'" onmouseout="this.style.background='none'">🚪 Odhlásiť sa</a>
+    </div>
+    <div class="settings-btn" onclick="openSettings()" title="Nastavenia">⚙️</div>
   </div>
 </div>
 
@@ -506,39 +514,25 @@ input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px;
   <button class="bot-cta dis" id="bot-cta" onclick="toggleBot()">⏳ Pripájam...</button>
 </div>
 
-<!-- SETTINGS OVERLAY -->
 <div class="overlay" id="overlay" onclick="closeSettings()"></div>
 <div class="settings-sheet" id="settings-sheet">
   <div class="sheet-handle"></div>
-  <div class="sheet-title">⚙️ Nastavenia IG API</div>
+  <div class="sheet-title">⚙️ Nastavenia</div>
 
-  <div class="section-label">Instagram Graph API</div>
-  <p style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:12px">
-    Vyžaduje Business/Creator účet prepojený s Facebook Page.<br>
-    1. <a href="https://developers.facebook.com/apps" target="_blank" style="color:var(--pk)">developers.facebook.com</a> → Nová app<br>
-    2. Pridaj produkt: <strong>Instagram Graph API</strong><br>
-    3. Vygeneruj <strong>User Access Token</strong> s oprávneniami <code style="font-size:11px;background:var(--s3);padding:1px 4px;border-radius:3px">instagram_basic, instagram_content_publish</code><br>
-    4. Nájdi <strong>IG User ID</strong> cez <a href="https://developers.facebook.com/tools/explorer" target="_blank" style="color:var(--pk)">Graph Explorer</a>
-  </p>
-
-  <div class="field-group" style="margin-bottom:10px">
-    <div class="field-label">Access Token</div>
-    <input type="text" id="cfg-token" placeholder="EAAxxxx..." oninput="pubConfigChanged()">
+  <div class="section-label">Prihlásený účet</div>
+  <div id="settings-account" style="background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+    <img id="sa-avatar" src="" width="44" height="44" style="border-radius:50%;object-fit:cover;border:2px solid var(--border2)">
+    <div>
+      <div id="sa-username" style="font-family:var(--fd);font-weight:700;font-size:15px">—</div>
+      <div id="sa-uid" style="font-family:var(--fm);font-size:11px;color:var(--muted);margin-top:2px">IG ID: —</div>
+      <div id="sa-token" style="font-size:11px;color:var(--gr);margin-top:3px">—</div>
+    </div>
   </div>
-  <div class="field-group" style="margin-bottom:10px">
-    <div class="field-label">IG User ID</div>
-    <input type="text" id="cfg-uid" placeholder="1234567890" oninput="pubConfigChanged()">
-  </div>
-  <div class="field-group" style="margin-bottom:12px">
-    <div class="field-label">Verejná URL servera <span style="color:var(--muted)">(pre auto-publish z lokálnych súborov)</span></div>
-    <input type="url" id="cfg-puburl" placeholder="https://abc.ngrok.io">
-    <div class="url-preview">Potrebné len ak nahrávate súbory cez dashboard.<br>Použiť ngrok: <code style="font-size:11px;background:var(--s3);padding:1px 5px;border-radius:3px">ngrok http 5000</code></div>
-  </div>
+  <button onclick="window.location='/auth/logout'" class="btn btn-danger" style="width:100%;justify-content:center;margin-bottom:20px">🚪 Odhlásiť sa</button>
+  <button onclick="verifyAccount()" class="btn btn-secondary" style="width:100%;justify-content:center;margin-bottom:6px">🔍 Overiť token</button>
+  <div id="verify-result" style="font-size:13px;text-align:center;color:var(--muted);margin-bottom:16px"></div>
 
-  <button class="btn btn-primary" style="width:100%;justify-content:center;margin-bottom:10px" onclick="savePubConfig()">💾 Uložiť a overiť</button>
-  <div id="verify-result" style="font-size:13px;text-align:center;color:var(--muted)"></div>
-
-  <div class="section-label" style="margin-top:20px">Rýchlosť bota</div>
+  <div class="section-label">Rýchlosť bota</div>
   <div class="slider-row"><div class="slider-head"><span class="slider-name">Pauza min (s)</span><span class="slider-val" id="v-pmin">9s</span></div><input type="range" id="s-pmin" min="5" max="40" value="9" oninput="document.getElementById('v-pmin').textContent=this.value+'s'"></div>
   <div class="slider-row"><div class="slider-head"><span class="slider-name">Pauza max (s)</span><span class="slider-val" id="v-pmax">30s</span></div><input type="range" id="s-pmax" min="15" max="70" value="30" oninput="document.getElementById('v-pmax').textContent=this.value+'s'"></div>
   <div class="slider-row"><div class="slider-head"><span class="slider-name">Pauza medzi kolami</span><span class="slider-val" id="v-rp">100s</span></div><input type="range" id="s-rp" min="60" max="300" step="10" value="100" oninput="document.getElementById('v-rp').textContent=this.value+'s'"></div>
