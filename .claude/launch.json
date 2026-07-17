@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "flask-server",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["bot_server.py"],
+      "port": 5000
+    }
+  ]
+}

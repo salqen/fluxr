@@ -47,6 +47,10 @@ SECRET_KEY      = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 ANTHROPIC_KEY   = os.environ.get("ANTHROPIC_API_KEY", "")
 BASE_URL        = os.environ.get("BASE_URL", "http://localhost:5000")  # Railway URL pre media
 PORT            = int(os.environ.get("PORT", 5000))
+# Zdieľaný token medzi serverom a lokálnym workerom (Reach Booster beží na PC,
+# ovláda sa z webu). Nastav rovnakú hodnotu v Railway → Variables aj v workeri.
+AGENT_TOKEN     = os.environ.get("AGENT_TOKEN", "")
+AGENT_TIMEOUT   = 20  # sekúnd bez ozvania = worker offline
 
 app = Flask(__name__)
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -85,13 +89,29 @@ bot_state = {
     "likes": 0, "comments": 0, "posts": 0,
     "likes_total": 0, "comments_total": 0, "elapsed": 0,
     "current_tag": "", "current_account": "", "log": [],
-    "selenium_available": SELENIUM_AVAILABLE
+    "selenium_available": SELENIUM_AVAILABLE,
+    "agent_online": False
 }
 bot_config    = {}
 bot_thread    = None
 stop_event    = threading.Event()
 active_logins = {}
 schedulers    = {}
+# Stav lokálneho workera (Reach Booster beží na PC používateľa, ovláda sa z webu)
+agent_state   = {"last_seen": 0.0, "desired_running": False}
+
+def _agent_online() -> bool:
+    return (time.time() - agent_state["last_seen"]) < AGENT_TIMEOUT
+
+def _check_agent_token():
+    """Vráti (ok, error_response). Overí zdieľaný AGENT_TOKEN."""
+    if not AGENT_TOKEN:
+        return False, (jsonify({"ok": False, "error": "Server nemá nastavený AGENT_TOKEN."}), 503)
+    body = request.get_json(silent=True) or {}
+    tok = body.get("token") or request.headers.get("X-Agent-Token", "")
+    if tok != AGENT_TOKEN:
+        return False, (jsonify({"ok": False, "error": "Neplatný token."}), 403)
+    return True, None
 
 # ── USERS ─────────────────────────────────────────────────────────────────────
 def load_users() -> dict:
@@ -547,34 +567,82 @@ def api_me():
 # ── API — BOT ─────────────────────────────────────────────────────────────────
 @app.route("/api/status")
 def api_status():
+    bot_state["agent_online"] = _agent_online()
     return jsonify(bot_state)
 
 @app.route("/api/start", methods=["POST"])
 def api_start():
     global bot_thread
-    if not SELENIUM_AVAILABLE:
-        return jsonify({"ok": False, "msg": "Selenium bot nie je dostupný na Railway. Funguje len lokálne."})
-    if bot_state["running"]:
-        return jsonify({"ok": False, "msg": "Bot už beží"})
     data = request.get_json(silent=True)
     if data and "config" in data:
         bot_config.update(data["config"])
         with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(bot_config, f, ensure_ascii=False, indent=2)
+
+    # Režim 1 — Selenium beží priamo v tomto procese (appka spustená lokálne na PC)
+    if SELENIUM_AVAILABLE:
+        if bot_state["running"]:
+            return jsonify({"ok": False, "msg": "Bot už beží"})
+        bot_state.update({"running": True, "likes": 0, "comments": 0, "posts": 0, "elapsed": 0, "log": []})
+        stop_event.clear()
+        add_log("▶ Bot spustený (lokálne, v tomto procese)", "ok")
+        bot_thread = threading.Thread(target=run_bot, daemon=True)
+        bot_thread.start()
+        return jsonify({"ok": True, "mode": "local"})
+
+    # Režim 2 — server (Railway): príkaz odovzdáme lokálnemu workeru
+    agent_state["desired_running"] = True
     bot_state.update({"running": True, "likes": 0, "comments": 0, "posts": 0, "elapsed": 0, "log": []})
-    stop_event.clear()
-    add_log("▶ Bot spustený", "ok")
-    bot_thread = threading.Thread(target=run_bot, daemon=True)
-    bot_thread.start()
-    return jsonify({"ok": True})
+    if _agent_online():
+        add_log("▶ Štart — odovzdávam príkaz lokálnemu workeru", "ok")
+    else:
+        bot_state["running"] = False
+        add_log("⏳ Štart vyžiadaný. Čakám na lokálny worker — spusti run_local_worker.bat na svojom PC.", "warn")
+    return jsonify({"ok": True, "mode": "agent", "agent_online": _agent_online()})
 
 @app.route("/api/stop", methods=["POST"])
 def api_stop():
-    if not bot_state["running"]:
-        return jsonify({"ok": False, "msg": "Bot nebeží"})
-    stop_event.set()
-    add_log("⏹ Zastavujem...", "warn")
+    agent_state["desired_running"] = False
+    if SELENIUM_AVAILABLE and bot_state["running"]:
+        stop_event.set()
+        add_log("⏹ Zastavujem...", "warn")
+    elif not _agent_online():
+        bot_state["running"] = False
+        add_log("⏹ Zastavené.", "warn")
+    else:
+        add_log("⏹ Zastavujem... (lokálny worker dokončí aktuálnu akciu)", "warn")
     return jsonify({"ok": True})
+
+# ── API — LOKÁLNY WORKER (agent) ──────────────────────────────────────────────
+@app.route("/api/agent/poll", methods=["POST"])
+def api_agent_poll():
+    ok, err = _check_agent_token()
+    if not ok:
+        return err
+    agent_state["last_seen"] = time.time()
+    return jsonify({
+        "ok": True,
+        "desired_running": agent_state["desired_running"],
+        "config": bot_config
+    })
+
+@app.route("/api/agent/report", methods=["POST"])
+def api_agent_report():
+    ok, err = _check_agent_token()
+    if not ok:
+        return err
+    agent_state["last_seen"] = time.time()
+    snap = (request.get_json(silent=True) or {}).get("state", {})
+    for k in ("running", "blocked", "likes", "comments", "posts",
+              "likes_total", "comments_total", "elapsed",
+              "current_tag", "current_account", "log"):
+        if k in snap:
+            bot_state[k] = snap[k]
+    try:
+        save_stats()
+    except Exception:
+        pass
+    return jsonify({"ok": True, "desired_running": agent_state["desired_running"]})
 
 @app.route("/api/config", methods=["GET"])
 def api_get_config():

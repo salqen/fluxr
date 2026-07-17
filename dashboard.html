@@ -496,7 +496,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;heigh
         <div id="bot-selenium-warn" class="card" style="display:none;margin-bottom:16px;border-color:rgba(255,140,66,.35)">
           <div class="card-body" style="display:flex;gap:12px;align-items:flex-start">
             <span style="font-size:20px">⚠️</span>
-            <div class="hint">Reach Booster (Selenium) <b>nie je dostupný na tomto serveri</b>. Bot beží len lokálne s pripojeným Chrome (port 9222). Publikovanie a plánovač fungujú normálne.</div>
+            <div class="hint">Reach Booster beží na <b>tvojom počítači</b> (Chrome, port 9222), ovláda sa odtiaľto. Aby šiel Štart, spusti na PC <b>run_local_worker.bat</b> — keď sa worker pripojí, tlačidlo Štart sa odomkne. Publikovanie a plánovač fungujú nezávisle.</div>
           </div>
         </div>
 
@@ -685,7 +685,7 @@ function renderHealth(){
     {ic:'📤',t:'Publisher',ok:me.publisher_ready,d:me.publisher_ready?'Pripravený':'ig_publisher.py chýba'},
     {ic:'📸',t:'IG Business účet',ok:me.ig_business,d:me.ig_business?'Prepojený — publikovanie funguje':'Nenájdený — prepni IG na Business/Creator alebo zadaj ID ručne'},
     {ic:'✨',t:'AI asistent',ok:me.ai_ready,d:me.ai_ready?'Anthropic API pripojené':'Chýba ANTHROPIC_API_KEY na serveri'},
-    {ic:'🤖',t:'Reach Booster (bot)',ok:sys.selenium_available,d:sys.selenium_available?'Selenium dostupný':'Len lokálne (Selenium vypnutý na serveri)'},
+    {ic:'🤖',t:'Reach Booster (bot)',ok:sys.selenium_available||sys.agent_online,d:sys.selenium_available?'Selenium dostupný (lokálne)':sys.agent_online?'Lokálny worker pripojený':'Worker offline — spusti run_local_worker.bat na PC'},
   ];
   const html=rows.map(r=>`<div class="h-row"><div class="h-ic">${r.ic}</div>
      <div class="h-tx"><div class="h-t">${r.t}</div><div class="h-d">${r.d}</div></div>
@@ -861,7 +861,7 @@ function renderBotChips(){
 function addComment(){const inp=document.getElementById('cmt-input');const val=inp.value.trim();if(!val)return;comments.push(val);inp.value='';renderComments();}
 function removeComment(i){comments.splice(i,1);renderComments();}
 function renderComments(){document.getElementById('cmt-list').innerHTML=comments.map((c,i)=>`<div style="display:flex;align-items:center;justify-content:space-between;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;font-size:13.5px"><span>${c}</span><button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px" onclick="removeComment(${i})">✕</button></div>`).join('');}
-async function toggleBot(){if(!online||!sys.selenium_available)return;
+async function toggleBot(){if(!online||!(sys.selenium_available||sys.agent_online))return;
   try{await fetch(API+(running?'/api/stop':'/api/start'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(running?{}:{config:buildBotConfig()})});}catch(e){}}
 function buildBotConfig(){return{mode:botMode,hashtags:botHashtags,viral_accounts:botViral,
   comments_list:comments.length?comments:cfg.comments_list||[],
@@ -916,11 +916,12 @@ async function poll(){
       document.getElementById('dot').className='dot on';
       document.getElementById('srv-label').textContent='Online';
       loadBotConfig();renderHealth();
-      document.getElementById('bot-selenium-warn').style.display=st.selenium_available?'none':'block';
     }
     running=st.running;
+    const botReady=st.selenium_available||st.agent_online;
+    document.getElementById('bot-selenium-warn').style.display=botReady?'none':'block';
     const cta=document.getElementById('cta-bot');
-    if(!st.selenium_available){cta.className='cta-bot dis';cta.textContent='🔌 Len lokálne';}
+    if(!botReady){cta.className='cta-bot dis';cta.textContent='🔌 Čaká na workera';}
     else{cta.textContent=running?'⏹ Zastaviť':'▶ Spustiť';cta.className=running?'cta-bot stop':'cta-bot start';}
     const banner=document.getElementById('bot-banner');
     banner.className='bot-banner'+(running?' run':st.blocked?' blk':'');
