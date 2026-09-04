@@ -69,6 +69,11 @@ if not os.environ.get("SECRET_KEY"):
     print("[WARN] SECRET_KEY nie je nastaveny v ENV - sessions sa zrusia pri restarte. "
           "Nastav stabilny SECRET_KEY v Railway premennych.")
 
+# ── META GRAPH API ───────────────────────────────────────────────────────────
+# Verzie expirujú ~2 roky po vydaní (v19.0 expirovala 21. 5. 2026) — držať aktuálnu.
+GRAPH_VERSION = "v26.0"
+GRAPH_URL     = f"https://graph.facebook.com/{GRAPH_VERSION}"
+
 # ── SÚBORY & PRIEČINKY ────────────────────────────────────────────────────────
 # Na Railway /tmp pretrváva počas behu, resetuje sa pri redeploy
 DATA_DIR      = os.environ.get("DATA_DIR", "/tmp/fluxr_data")
@@ -432,10 +437,13 @@ def auth_login():
     state = secrets.token_urlsafe(16)
     session["oauth_state"] = state
     oauth_url = (
-        "https://www.facebook.com/v19.0/dialog/oauth"
+        f"https://www.facebook.com/{GRAPH_VERSION}/dialog/oauth"
         f"?client_id={META_APP_ID}"
         f"&redirect_uri={REDIRECT_URI}"
+        # ads_management + ads_read vyžaduje Meta, ak je rola na Page udelená cez
+        # Business Manager (klientske účty) — bez nich publikovanie zlyhá
         "&scope=instagram_basic,instagram_content_publish,pages_show_list,pages_read_engagement"
+        ",ads_management,ads_read"
         f"&state={state}"
         "&response_type=code"
     )
@@ -453,7 +461,7 @@ def auth_callback():
     if state != session.pop("oauth_state", None):
         return redirect("/?error=invalid_state")
 
-    r1 = req_lib.get("https://graph.facebook.com/v19.0/oauth/access_token", params={
+    r1 = req_lib.get(f"{GRAPH_URL}/oauth/access_token", params={
         "client_id":     META_APP_ID,
         "client_secret": META_APP_SECRET,
         "redirect_uri":  REDIRECT_URI,
@@ -465,7 +473,7 @@ def auth_callback():
 
     short_token = r1["access_token"]
 
-    r2 = req_lib.get("https://graph.facebook.com/v19.0/oauth/access_token", params={
+    r2 = req_lib.get(f"{GRAPH_URL}/oauth/access_token", params={
         "grant_type":        "fb_exchange_token",
         "client_id":         META_APP_ID,
         "client_secret":     META_APP_SECRET,
@@ -478,19 +486,19 @@ def auth_callback():
     ig_followers, ig_business = 0, False
     page_token = long_token
     try:
-        pages = req_lib.get("https://graph.facebook.com/v19.0/me/accounts", params={
+        pages = req_lib.get(f"{GRAPH_URL}/me/accounts", params={
             "access_token": long_token
         }).json().get("data", [])
 
         for page in pages:
             pg_tok = page.get("access_token", long_token)
-            ig_data = req_lib.get(f"https://graph.facebook.com/v19.0/{page['id']}", params={
+            ig_data = req_lib.get(f"{GRAPH_URL}/{page['id']}", params={
                 "fields":       "instagram_business_account",
                 "access_token": pg_tok
             }).json()
             ig_id = ig_data.get("instagram_business_account", {}).get("id")
             if ig_id:
-                profile = req_lib.get(f"https://graph.facebook.com/v19.0/{ig_id}", params={
+                profile = req_lib.get(f"{GRAPH_URL}/{ig_id}", params={
                     "fields":       "username,profile_picture_url,followers_count",
                     "access_token": pg_tok
                 }).json()
@@ -506,7 +514,7 @@ def auth_callback():
 
     # Žiadny IG Business účet → publikovanie nebude fungovať, ale prihlásime používateľa
     if not ig_user_id:
-        me = req_lib.get("https://graph.facebook.com/v19.0/me", params={
+        me = req_lib.get(f"{GRAPH_URL}/me", params={
             "fields": "id,name", "access_token": long_token
         }).json()
         ig_user_id  = me.get("id", str(uuid.uuid4())[:8])

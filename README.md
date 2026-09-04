@@ -60,7 +60,7 @@ Publishing requires an **Instagram Business or Creator** account linked to a **F
 2. Link it to a Facebook Page (IG → Settings → Linked accounts, or Page → Settings → Linked accounts).
 3. At [developers.facebook.com](https://developers.facebook.com): create an app → add **Instagram Graph API** + **Facebook Login**.
 4. In **Facebook Login → Settings**, add your `REDIRECT_URI` to **Valid OAuth Redirect URIs**.
-5. Request permissions: `instagram_basic`, `instagram_content_publish`, `pages_show_list`, `pages_read_engagement`.
+5. Request permissions: `instagram_basic`, `instagram_content_publish`, `pages_show_list`, `pages_read_engagement`, `ads_management`, `ads_read` (the last two are required by Meta when your Page role was granted via Business Manager — i.e. client accounts).
 6. Copy the **App Secret** → `META_APP_SECRET`.
 
 Then **log in through fluxr** — the OAuth flow auto-discovers your IG Business account and stores the Page token used for publishing.

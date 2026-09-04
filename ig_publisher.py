@@ -23,7 +23,7 @@ import threading
 from datetime import datetime
 
 
-GRAPH_VERSION = "v19.0"
+GRAPH_VERSION = "v26.0"
 BASE_URL = f"https://graph.facebook.com/{GRAPH_VERSION}"
 
 
