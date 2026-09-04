@@ -1,0 +1,18 @@
+# fluxr na VPS — vlastný stack, oddelený od všetkého ostatného na serveri.
+# Port sa viaže LEN na 127.0.0.1; von ho púšťa reverse proxy (OpenLiteSpeed vhost).
+services:
+  fluxr:
+    build: .
+    image: fluxr:latest
+    container_name: fluxr
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATA_DIR: /data
+    ports:
+      - "127.0.0.1:5000:5000"
+    volumes:
+      - ./data:/data
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }

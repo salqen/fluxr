@@ -10,7 +10,7 @@ cd /d "%~dp0"
 
 REM --- Nastavenia ---------------------------------------------
 REM Ak chces, AGENT_TOKEN si sem rovno vpis za "=" a nebude sa pytat.
-set "FLUXR_SERVER=https://web-production-e461e.up.railway.app"
+set "FLUXR_SERVER=https://fluxr.bropri.sk"
 set "AGENT_TOKEN="
 
 if "%AGENT_TOKEN%"=="" (

@@ -9,7 +9,7 @@ Ovládaš ho z webu: na Railway dashboarde stlačíš Štart/Stop, worker to zac
 a podľa toho spustí/zastaví bota. Stav a logy posiela späť na web.
 
 Spustenie (najjednoduchšie cez run_local_worker.bat), alebo ručne:
-    set FLUXR_SERVER=https://web-production-e461e.up.railway.app
+    set FLUXR_SERVER=https://fluxr.bropri.sk
     set AGENT_TOKEN=<rovnaký token ako v Railway Variables>
     python bot_worker.py
 
@@ -26,7 +26,7 @@ import threading
 import requests
 
 # ── Konfigurácia ──────────────────────────────────────────────────────────────
-SERVER = os.environ.get("FLUXR_SERVER", "https://web-production-e461e.up.railway.app").rstrip("/")
+SERVER = os.environ.get("FLUXR_SERVER", "https://fluxr.bropri.sk").rstrip("/")
 TOKEN  = os.environ.get("AGENT_TOKEN", "")
 POLL   = float(os.environ.get("FLUXR_POLL", "4"))          # ako často sa pýtať servera (s)
 

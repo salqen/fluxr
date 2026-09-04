@@ -3,6 +3,7 @@
 .env.local
 
 # Runtime data
+/data/
 /tmp/
 fluxr_data/
 instabot_data/
