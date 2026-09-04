@@ -1,7 +1,7 @@
 @echo off
 REM ============================================================
 REM  fluxr - lokalny worker (Reach Booster)
-REM  Appka bezi na Railway, bot bezi tu a ovlada sa z webu.
+REM  Appka bezi na serveri (fluxr.bropri.sk), bot bezi tu a ovlada sa z webu.
 REM  1) otvori Chrome s remote-debugging (port 9222)
 REM  2) spusti workera, ktory caka na prikaz Start z webu
 REM ============================================================
@@ -14,7 +14,7 @@ set "FLUXR_SERVER=https://fluxr.bropri.sk"
 set "AGENT_TOKEN="
 
 if "%AGENT_TOKEN%"=="" (
-    echo Zadaj AGENT_TOKEN ^(rovnaky ako v Railway -^> Variables^):
+    echo Zadaj AGENT_TOKEN ^(rovnaky ako AGENT_TOKEN v .env na serveri^):
     set /p AGENT_TOKEN=token:
 )
 if "%AGENT_TOKEN%"=="" (

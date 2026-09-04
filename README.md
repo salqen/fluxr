@@ -106,7 +106,7 @@ docker compose up -d --build   # binds 127.0.0.1:5000, data in ./data
 
 ## The Reach Booster (engagement bot)
 
-Selenium-based and **only runs locally** — Railway has no browser. It attaches to a Chrome instance started with remote debugging:
+Selenium-based and **only runs locally** — the server has no browser. It attaches to a Chrome instance started with remote debugging:
 
 ```bash
 chrome --remote-debugging-port=9222 --user-data-dir="C:/chrome-bot"

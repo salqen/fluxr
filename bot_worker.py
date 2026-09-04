@@ -2,15 +2,15 @@
 """
 fluxr — lokálny worker (Reach Booster)
 ======================================
-Beží na TVOJOM počítači. Appka na Railway sa stará o publikovanie a plánovač;
+Beží na TVOJOM počítači. Appka na serveri (fluxr.bropri.sk) sa stará o publikovanie a plánovač;
 tento worker robí lajky/komenty cez tvoj lokálny Chrome (port 9222).
 
-Ovládaš ho z webu: na Railway dashboarde stlačíš Štart/Stop, worker to zachytí
+Ovládaš ho z webu: na webovom dashboarde stlačíš Štart/Stop, worker to zachytí
 a podľa toho spustí/zastaví bota. Stav a logy posiela späť na web.
 
 Spustenie (najjednoduchšie cez run_local_worker.bat), alebo ručne:
     set FLUXR_SERVER=https://fluxr.bropri.sk
-    set AGENT_TOKEN=<rovnaký token ako v Railway Variables>
+    set AGENT_TOKEN=<rovnaký token ako AGENT_TOKEN v /opt/fluxr/.env na serveri>
     python bot_worker.py
 
 Podmienky:
@@ -31,7 +31,7 @@ TOKEN  = os.environ.get("AGENT_TOKEN", "")
 POLL   = float(os.environ.get("FLUXR_POLL", "4"))          # ako často sa pýtať servera (s)
 
 if not TOKEN:
-    print("❌ CHYBA: nastav premennú AGENT_TOKEN (rovnakú ako v Railway → Variables).")
+    print("❌ CHYBA: nastav premennú AGENT_TOKEN (rovnakú ako AGENT_TOKEN v /opt/fluxr/.env na serveri).")
     sys.exit(1)
 
 # Reuse celej bot logiky zo servera (rovnaký Selenium kód, žiadna duplicita)

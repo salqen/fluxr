@@ -1,8 +1,8 @@
 """
-fluxr — Railway Edition
+fluxr — server edition (VPS)
 =======================
 Spustenie lokálne: python bot_server.py
-Railway: automaticky cez Procfile
+Produkcia: systemd fluxr.service na VPS (viď deploy/)
 """
 
 from flask import Flask, jsonify, request, send_from_directory, redirect, session
@@ -19,7 +19,7 @@ except Exception:
 from werkzeug.utils import secure_filename
 import requests as req_lib
 
-# ── SELENIUM — len lokálne, na Railway vypnuté ────────────────────────────────
+# ── SELENIUM — len lokálne, na serveri vypnuté ────────────────────────────────
 SELENIUM_AVAILABLE = False
 try:
     from selenium import webdriver
@@ -45,10 +45,10 @@ META_APP_SECRET = os.environ.get("META_APP_SECRET", "")
 REDIRECT_URI    = os.environ.get("REDIRECT_URI", "http://localhost:5000/auth/callback")
 SECRET_KEY      = os.environ.get("SECRET_KEY", secrets.token_hex(32))
 ANTHROPIC_KEY   = os.environ.get("ANTHROPIC_API_KEY", "")
-BASE_URL        = os.environ.get("BASE_URL", "http://localhost:5000")  # Railway URL pre media
+BASE_URL        = os.environ.get("BASE_URL", "http://localhost:5000")  # verejná URL pre media
 PORT            = int(os.environ.get("PORT", 5000))
 # Zdieľaný token medzi serverom a lokálnym workerom (Reach Booster beží na PC,
-# ovláda sa z webu). Nastav rovnakú hodnotu v Railway → Variables aj v workeri.
+# ovláda sa z webu). Nastav rovnakú hodnotu v .env na serveri aj v workeri.
 AGENT_TOKEN     = os.environ.get("AGENT_TOKEN", "")
 AGENT_TIMEOUT   = 20  # sekúnd bez ozvania = worker offline
 
@@ -67,7 +67,7 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 if not os.environ.get("SECRET_KEY"):
     print("[WARN] SECRET_KEY nie je nastaveny v ENV - sessions sa zrusia pri restarte. "
-          "Nastav stabilny SECRET_KEY v Railway premennych.")
+          "Nastav stabilny SECRET_KEY v .env.")
 
 # ── META GRAPH API ───────────────────────────────────────────────────────────
 # Verzie expirujú ~2 roky po vydaní (v19.0 expirovala 21. 5. 2026) — držať aktuálnu.
@@ -75,7 +75,7 @@ GRAPH_VERSION = "v26.0"
 GRAPH_URL     = f"https://graph.facebook.com/{GRAPH_VERSION}"
 
 # ── SÚBORY & PRIEČINKY ────────────────────────────────────────────────────────
-# Na Railway /tmp pretrváva počas behu, resetuje sa pri redeploy
+# Produkcia: DATA_DIR=/opt/fluxr/data (perzistentné); default /tmp len pre lokálny vývoj
 DATA_DIR      = os.environ.get("DATA_DIR", "/tmp/fluxr_data")
 MEDIA_DIR     = os.path.join(DATA_DIR, "media_uploads")
 DB_FILE       = os.path.join(DATA_DIR, "seen_posts.txt")
@@ -598,7 +598,7 @@ def api_start():
         bot_thread.start()
         return jsonify({"ok": True, "mode": "local"})
 
-    # Režim 2 — server (Railway): príkaz odovzdáme lokálnemu workeru
+    # Režim 2 — server: príkaz odovzdáme lokálnemu workeru
     agent_state["desired_running"] = True
     bot_state.update({"running": True, "likes": 0, "comments": 0, "posts": 0, "elapsed": 0, "log": []})
     if _agent_online():
@@ -739,7 +739,7 @@ def pub_upload():
     uid      = str(uuid.uuid4())[:8]
     new_name = f"{uid}{ext}"
     f.save(os.path.join(MEDIA_DIR, new_name))
-    # Použije Railway URL namiesto localhost
+    # Použije verejnú BASE_URL namiesto localhost
     url = f"{BASE_URL}/media/{new_name}"
     return jsonify({"ok": True, "filename": new_name, "url": url})
 
@@ -864,7 +864,7 @@ def gen_caption():
     except Exception as e:
         return jsonify({"ok": False, "error": str(e)})
 
-# ── HEALTH CHECK pre Railway ──────────────────────────────────────────────────
+# ── HEALTH CHECK (systemd / OLS / Docker) ──────────────────────────────────────────────────
 @app.route("/health")
 def health():
     return jsonify({"status": "ok", "publisher": PUBLISHER_AVAILABLE, "selenium": SELENIUM_AVAILABLE})
@@ -882,9 +882,9 @@ if __name__ == "__main__":
                 schedulers[uid] = sch
 
     print("\n" + "="*60)
-    print("  fluxr — Railway Edition")
+    print("  fluxr — server edition (VPS)")
     print(f"  Publisher:  {'✅' if PUBLISHER_AVAILABLE else '⚠️ ig_publisher.py chýba'}")
-    print(f"  Selenium:   {'✅ dostupný' if SELENIUM_AVAILABLE else '❌ nedostupný (Railway mode)'}")
+    print(f"  Selenium:   {'✅ dostupný' if SELENIUM_AVAILABLE else '❌ nedostupný (server mode)'}")
     print(f"  Port:       {PORT}")
     print(f"  Base URL:   {BASE_URL}")
     print("="*60 + "\n")
