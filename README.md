@@ -1,6 +1,6 @@
 # fluxr
 
-Instagram content manager — **publish** posts/reels/stories, **schedule** them ahead, generate **AI captions**, and run an optional local **engagement bot**. Flask backend + single-file dashboard, deployed on Railway.
+Instagram content manager — **publish** posts/reels/stories, **schedule** them ahead, generate **AI captions**, and run an optional local **engagement bot**. Flask backend + single-file dashboard. Production runs as a hardened systemd service on a VPS behind OpenLiteSpeed — see **Deploy** below.
 
 ---
 
@@ -22,11 +22,13 @@ Instagram content manager — **publish** posts/reels/stories, **schedule** them
 | `ig_publisher.py` | Instagram Graph API wrapper + scheduler thread |
 | `dashboard.html` | Single-file SPA dashboard (no build step) |
 | `login.html` | OAuth landing page |
-| `Procfile` / `railway.json` | Railway deploy config (gunicorn) |
+| `deploy/` | VPS deploy: `fluxr.service` (systemd), `ols-proxy.conf` (OpenLiteSpeed reverse proxy), `setup-vps.sh` (bootstrap + update) |
+| `Dockerfile` / `docker-compose.yml` | Container build for any Docker host |
+| `Procfile` / `railway.json` | Legacy Railway config (instance no longer exists) |
 
-State is stored as JSON files under `DATA_DIR` (default `/tmp/fluxr_data`).
+State is stored as JSON files under `DATA_DIR` (default `/tmp/fluxr_data`; production uses `/opt/fluxr/data`).
 
-> ⚠️ On Railway, `/tmp` is wiped on every redeploy — users, tokens, and schedules reset. Mount a [Railway volume](https://docs.railway.app/reference/volumes) and point `DATA_DIR` at it for persistence.
+> ⚠️ Always point `DATA_DIR` at a persistent path in production — `/tmp` is wiped on reboot on most platforms, taking users, tokens and schedules with it.
 
 ---
 
@@ -34,7 +36,7 @@ State is stored as JSON files under `DATA_DIR` (default `/tmp/fluxr_data`).
 
 ### 1. Environment variables
 
-Copy `.env.example` and fill it in (or set these in **Railway → Variables**):
+Copy `.env.example` and fill it in (production: `/opt/fluxr/.env` on the VPS, created by `deploy/setup-vps.sh`):
 
 | Variable | Required | Notes |
 |----------|----------|-------|
@@ -77,13 +79,28 @@ python bot_server.py
 # http://localhost:5000
 ```
 
-**Railway:** push to the connected repo — `Procfile` / `railway.json` handle the rest:
+**VPS (production — `https://fluxr.bropri.sk`):**
 
-```
-gunicorn bot_server:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+Runs as the `fluxr` system user from `/opt/fluxr` (`app/` = git checkout, `venv/`, `data/`, `.env`), bound to `127.0.0.1:5000`. OpenLiteSpeed terminates TLS (Let's Encrypt via CyberPanel) and reverse-proxies to it; the vhost has `deploy/ols-proxy.conf` appended plus an HTTP→HTTPS rewrite.
+
+```bash
+# first install AND every update (git pull + pip + restart) — as root on the server
+DOMAIN=fluxr.bropri.sk bash /opt/fluxr/app/deploy/setup-vps.sh
+
+# logs / status
+journalctl -u fluxr -f
+systemctl status fluxr
 ```
 
-> Keep `--workers 1`. Bot state and schedulers live in memory; multiple workers would desync them.
+The unit is hardened (`ProtectSystem=strict`, writes allowed only to `/opt/fluxr/data`). Secrets live in `/opt/fluxr/.env` (mode 640, root:fluxr) and are never committed.
+
+**Docker (any host):**
+
+```bash
+docker compose up -d --build   # binds 127.0.0.1:5000, data in ./data
+```
+
+> Keep `--workers 1` everywhere. Bot state and schedulers live in memory; multiple workers would desync them.
 
 ---
 
@@ -109,4 +126,4 @@ Then start the bot from the dashboard. On the server this feature is intentional
 | `Object with ID '…' does not exist` on publish | No IG **Business** account linked — convert IG + link a Page, then re-login |
 | AI captions error | `ANTHROPIC_API_KEY` not set |
 | Login loops back to start | `SESSION_COOKIE_SECURE` requires HTTPS — use `https://` `BASE_URL`/`REDIRECT_URI` in prod |
-| Users logged out after deploy | `/tmp` wiped — set `SECRET_KEY` + a persistent `DATA_DIR` volume |
+| Users logged out after restart | `SECRET_KEY` missing or `DATA_DIR` on a non-persistent path — check `/opt/fluxr/.env` |
